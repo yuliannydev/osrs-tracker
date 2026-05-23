@@ -1,32 +1,87 @@
 'use client';
 import { useState } from 'react';
 import { useLocalStorage } from '@/lib/useLocalStorage';
-import { BH_LOCATIONS, BH_TIERS, formatXp } from '@/lib/osrs-data';
+import { HERB_PATCHES, HERBS, FLOWERS, COMPOST_TYPES } from '@/lib/osrs-data';
 
-export type BirdHouseEntry = {
+// ── Types ──
+export type HerbEntry = {
 	id: string;
 	date: string;
-	locations: string[];
-	tier: string;
-	seeds: number;
-	nests: number;
-	hunterXp: number; // auto-computed from tier × locations used
+	patches: string[];
+	herb: string; // selected herb (empty string = none)
+	flower: string; // selected flower (empty string = none)
+	compost: string;
+	yieldHerbs: number;
+	yieldFlowers: number;
+	totalYield: number; // auto-computed: yieldHerbs + yieldFlowers
+	note: string;
 };
 
-// Hunter XP per house collected — source: https://oldschool.runescape.wiki/w/Bird_house_trapping
-// Values are per single house; multiply by locations count for run total
-const TIER_HUNTER_XP: Record<string, number> = {
-	Regular: 280,
-	Oak: 420,
-	Willow: 560,
-	Teak: 700,
-	Maple: 820,
-	Mahogany: 960,
-	Yew: 1_020,
-	Magic: 1_140,
-	Redwood: 1_200,
-};
+// ── Mini tab nav for Herb / Flower section ──
+function CropNav({
+	active,
+	onChange,
+}: {
+	active: 'herb' | 'flower';
+	onChange: (v: 'herb' | 'flower') => void;
+}) {
+	const base: React.CSSProperties = {
+		flex: 1,
+		padding: '6px 0',
+		border: '1px solid transparent',
+		borderRadius: 3,
+		cursor: 'pointer',
+		fontFamily: 'inherit',
+		fontWeight: 'bold',
+		fontSize: '0.78rem',
+		transition: 'all 0.15s',
+		textAlign: 'center',
+	};
+	const inactive: React.CSSProperties = {
+		...base,
+		background: 'transparent',
+		color: 'var(--text-muted)',
+		borderColor: 'transparent',
+	};
+	const activeStyle: React.CSSProperties = {
+		...base,
+		background:
+			'linear-gradient(180deg, var(--bg-panel-light) 0%, var(--bg-panel-mid) 100%)',
+		borderColor: 'var(--border-bright)',
+		color: 'var(--gold)',
+	};
 
+	return (
+		<div
+			style={{
+				display: 'flex',
+				gap: 2,
+				background: 'rgba(0,0,0,0.4)',
+				padding: 3,
+				borderRadius: 4,
+				border: '1px solid var(--border)',
+				marginBottom: 10,
+			}}
+		>
+			<button
+				type='button'
+				style={active === 'herb' ? activeStyle : inactive}
+				onClick={() => onChange('herb')}
+			>
+				🌿 Herb Grown
+			</button>
+			<button
+				type='button'
+				style={active === 'flower' ? activeStyle : inactive}
+				onClick={() => onChange('flower')}
+			>
+				🌸 Flower Grown
+			</button>
+		</div>
+	);
+}
+
+// ── Chip selector ──
 function Chips({
 	options,
 	selected,
@@ -52,37 +107,125 @@ function Chips({
 	);
 }
 
+// ── Selection summary pill ──
+function SelectionSummary({ herb, flower }: { herb: string; flower: string }) {
+	if (!herb && !flower) return null;
+	return (
+		<div
+			style={{
+				background: 'rgba(0,0,0,0.25)',
+				border: '1px solid var(--border)',
+				borderRadius: 4,
+				padding: '10px 14px',
+				display: 'flex',
+				flexWrap: 'wrap',
+				gap: 8,
+				alignItems: 'center',
+			}}
+		>
+			<span
+				style={{
+					fontSize: '0.7rem',
+					color: 'var(--text-dim)',
+					textTransform: 'uppercase',
+					letterSpacing: '0.05em',
+					marginRight: 4,
+				}}
+			>
+				This run:
+			</span>
+			{herb && (
+				<span
+					style={{
+						background: 'rgba(32,96,32,0.35)',
+						border: '1px solid rgba(80,160,80,0.35)',
+						borderRadius: 20,
+						padding: '3px 10px',
+						fontSize: '0.78rem',
+						color: '#90e090',
+					}}
+				>
+					🌿 {herb}
+				</span>
+			)}
+			{flower && (
+				<span
+					style={{
+						background: 'rgba(140,40,120,0.25)',
+						border: '1px solid rgba(200,100,180,0.35)',
+						borderRadius: 20,
+						padding: '3px 10px',
+						fontSize: '0.78rem',
+						color: '#e090d0',
+					}}
+				>
+					🌸 {flower}
+				</span>
+			)}
+			{!herb && (
+				<span
+					style={{
+						fontSize: '0.75rem',
+						color: 'var(--text-dim)',
+						fontStyle: 'italic',
+					}}
+				>
+					No herb selected
+				</span>
+			)}
+			{!flower && (
+				<span
+					style={{
+						fontSize: '0.75rem',
+						color: 'var(--text-dim)',
+						fontStyle: 'italic',
+					}}
+				>
+					No flower selected
+				</span>
+			)}
+		</div>
+	);
+}
+
+// ── Add Entry Modal ──
 function AddModal({
 	onClose,
 	onSave,
 }: {
 	onClose: () => void;
-	onSave: (e: BirdHouseEntry) => void;
+	onSave: (e: HerbEntry) => void;
 }) {
-	const [locations, setLocations] = useState<string[]>(BH_LOCATIONS); // default all 4
-	const [tier, setTier] = useState('Yew');
-	const [seeds, setSeeds] = useState(10);
-	const [nests, setNests] = useState(0);
+	const [patches, setPatches] = useState<string[]>([]);
+	const [cropTab, setCropTab] = useState<'herb' | 'flower'>('herb');
+	const [herb, setHerb] = useState('');
+	const [flower, setFlower] = useState('');
+	const [compost, setCompost] = useState('Ultracompost');
+	const [yieldHerbs, setYieldHerbs] = useState(0);
+	const [yieldFlowers, setYieldFlowers] = useState(0);
+	const [note, setNote] = useState('');
 
-	const toggleLoc = (l: string) =>
-		setLocations((prev) =>
-			prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l],
+	const togglePatch = (p: string) =>
+		setPatches((prev) =>
+			prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p],
 		);
 
-	// Hunter XP auto-computed: xp per house × number of locations used
-	const xpPerHouse = TIER_HUNTER_XP[tier] ?? 0;
-	const totalHunterXp = xpPerHouse * locations.length;
+	// At least one crop and at least one patch required
+	const canSave = patches.length > 0 && (herb !== '' || flower !== '');
 
 	const handleSave = () => {
-		if (locations.length === 0) return;
+		if (!canSave) return;
 		onSave({
 			id: Date.now().toString(),
 			date: new Date().toISOString(),
-			locations,
-			tier,
-			seeds,
-			nests,
-			hunterXp: totalHunterXp,
+			patches,
+			herb,
+			flower,
+			compost,
+			yieldHerbs,
+			yieldFlowers,
+			totalYield: yieldHerbs + yieldFlowers,
+			note,
 		});
 		onClose();
 	};
@@ -97,6 +240,7 @@ function AddModal({
 				onClick={(e) => e.stopPropagation()}
 			>
 				<div style={{ padding: 24 }}>
+					{/* Header */}
 					<div
 						style={{
 							display: 'flex',
@@ -112,7 +256,7 @@ function AddModal({
 								fontSize: '1.1rem',
 							}}
 						>
-							🏠 Log Bird Houses
+							🌾 Log Farming Run
 						</h2>
 						<button
 							onClick={onClose}
@@ -129,42 +273,71 @@ function AddModal({
 					</div>
 
 					<div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-						{/* Locations */}
+						{/* Patches */}
 						<div>
 							<div
 								className='section-header'
 								style={{ marginBottom: 8 }}
 							>
-								Locations
+								Patches visited
 							</div>
 							<Chips
-								options={BH_LOCATIONS}
-								selected={locations}
-								onToggle={toggleLoc}
+								options={HERB_PATCHES}
+								selected={patches}
+								onToggle={togglePatch}
 							/>
 						</div>
 
-						{/* Tier */}
+						{/* Crops: mini-tab nav switching between Herb / Flower */}
 						<div>
 							<div
 								className='section-header'
 								style={{ marginBottom: 8 }}
 							>
-								Birdhouse Tier
+								Crops grown
+							</div>
+							<CropNav
+								active={cropTab}
+								onChange={setCropTab}
+							/>
+
+							{cropTab === 'herb' && (
+								<Chips
+									options={HERBS}
+									selected={herb ? [herb] : []}
+									onToggle={(h) => setHerb(h === herb ? '' : h)}
+								/>
+							)}
+							{cropTab === 'flower' && (
+								<Chips
+									options={FLOWERS}
+									selected={flower ? [flower] : []}
+									onToggle={(f) => setFlower(f === flower ? '' : f)}
+								/>
+							)}
+						</div>
+
+						{/* Compost */}
+						<div>
+							<div
+								className='section-header'
+								style={{ marginBottom: 8 }}
+							>
+								Compost used
 							</div>
 							<Chips
-								options={BH_TIERS}
-								selected={[tier]}
-								onToggle={setTier}
+								options={COMPOST_TYPES}
+								selected={[compost]}
+								onToggle={setCompost}
 							/>
 						</div>
 
-						{/* Seeds / Nests / Total XP (Hunter) — same 3-col grid as Slayer */}
+						{/* Yield fields (no profit, no xp) */}
 						<div
 							className='numbers-grid-3'
 							style={{
 								display: 'grid',
-								gridTemplateColumns: '1fr 1fr 1fr',
+								gridTemplateColumns: 'repeat(3, minmax(80px, 1fr))',
 								gap: 10,
 							}}
 						>
@@ -175,38 +348,18 @@ function AddModal({
 										color: 'var(--text-muted)',
 										display: 'block',
 										marginBottom: 4,
+										whiteSpace: 'nowrap',
 									}}
 								>
-									Seeds used
+									Herbs yield
 								</label>
 								<input
 									className='osrs-input'
 									style={{ width: '100%' }}
 									type='number'
 									min={0}
-									value={seeds || ''}
-									onChange={(e) => setSeeds(+e.target.value)}
-									placeholder='10'
-								/>
-							</div>
-							<div>
-								<label
-									style={{
-										fontSize: '0.75rem',
-										color: 'var(--text-muted)',
-										display: 'block',
-										marginBottom: 4,
-									}}
-								>
-									Nests collected
-								</label>
-								<input
-									className='osrs-input'
-									style={{ width: '100%' }}
-									type='number'
-									min={0}
-									value={nests || ''}
-									onChange={(e) => setNests(+e.target.value)}
+									value={yieldHerbs || ''}
+									onChange={(e) => setYieldHerbs(+e.target.value)}
 									placeholder='0'
 								/>
 							</div>
@@ -217,10 +370,34 @@ function AddModal({
 										color: 'var(--text-muted)',
 										display: 'block',
 										marginBottom: 4,
+										whiteSpace: 'nowrap',
 									}}
 								>
-									Total XP (Hunter)
+									Flowers yield
 								</label>
+								<input
+									className='osrs-input'
+									style={{ width: '100%' }}
+									type='number'
+									min={0}
+									value={yieldFlowers || ''}
+									onChange={(e) => setYieldFlowers(+e.target.value)}
+									placeholder='0'
+								/>
+							</div>
+							<div>
+								<label
+									style={{
+										fontSize: '0.75rem',
+										color: 'var(--text-muted)',
+										display: 'block',
+										marginBottom: 4,
+										whiteSpace: 'nowrap',
+									}}
+								>
+									Total yield
+								</label>
+								{/* Auto-computed, read-only */}
 								<div
 									style={{
 										background: 'rgba(0,0,0,0.35)',
@@ -229,17 +406,47 @@ function AddModal({
 										padding: '6px 10px',
 										fontSize: '0.9rem',
 										fontWeight: 'bold',
+										color:
+											yieldHerbs + yieldFlowers > 0
+												? 'var(--gold)'
+												: 'var(--text-dim)',
 										height: 34,
 										display: 'flex',
 										alignItems: 'center',
-										color:
-											totalHunterXp > 0 ? 'var(--gold)' : 'var(--text-dim)',
 									}}
 								>
-									{totalHunterXp > 0 ? formatXp(totalHunterXp) : '—'}
+									{yieldHerbs + yieldFlowers || '—'}
 								</div>
 							</div>
 						</div>
+
+						{/* Note */}
+						<div>
+							<label
+								style={{
+									fontSize: '0.75rem',
+									color: 'var(--text-muted)',
+									display: 'block',
+									marginBottom: 4,
+								}}
+							>
+								Note (optional)
+							</label>
+							<input
+								className='osrs-input'
+								style={{ width: '100%' }}
+								value={note}
+								onChange={(e) => setNote(e.target.value)}
+								placeholder='Any notes...'
+								maxLength={100}
+							/>
+						</div>
+
+						{/* Selection summary — shows selected herb + flower */}
+						<SelectionSummary
+							herb={herb}
+							flower={flower}
+						/>
 
 						{/* Actions */}
 						<div
@@ -247,7 +454,7 @@ function AddModal({
 								display: 'flex',
 								gap: 10,
 								justifyContent: 'flex-end',
-								paddingTop: 8,
+								paddingTop: 4,
 							}}
 						>
 							<button
@@ -260,11 +467,8 @@ function AddModal({
 							<button
 								className='osrs-btn'
 								onClick={handleSave}
-								disabled={locations.length === 0}
-								style={{
-									padding: '8px 20px',
-									opacity: locations.length === 0 ? 0.5 : 1,
-								}}
+								disabled={!canSave}
+								style={{ padding: '8px 20px', opacity: canSave ? 1 : 0.5 }}
 							>
 								+ Log Run
 							</button>
@@ -276,22 +480,25 @@ function AddModal({
 	);
 }
 
-export default function BirdHouseTracker() {
-	const [entries, setEntries, loaded] = useLocalStorage<BirdHouseEntry[]>(
-		'osrs-bird-houses',
+// ── Main tracker component ──
+export default function HerbTracker() {
+	const [entries, setEntries, loaded] = useLocalStorage<HerbEntry[]>(
+		'osrs-herb-runs',
 		[],
 	);
 	const [showModal, setShowModal] = useState(false);
 
-	const addEntry = (e: BirdHouseEntry) => setEntries((prev) => [e, ...prev]);
+	const addEntry = (e: HerbEntry) => setEntries((prev) => [e, ...prev]);
 	const deleteEntry = (id: string) =>
 		setEntries((prev) => prev.filter((e) => e.id !== id));
 
+	// Stats
 	const totalRuns = entries.length;
-	const totalNests = entries.reduce((s, e) => s + e.nests, 0);
-	const totalHunterXp = entries.reduce((s, e) => s + e.hunterXp, 0);
+	const totalYield = entries.reduce((s, e) => s + e.totalYield, 0);
+	const totalHerbs = entries.reduce((s, e) => s + e.yieldHerbs, 0);
+	const totalFlowers = entries.reduce((s, e) => s + e.yieldFlowers, 0);
 
-	// Day streak
+	// Day streak (consecutive days with at least one run)
 	const streak = (() => {
 		if (!entries.length) return 0;
 		const days = [...new Set(entries.map((e) => e.date.slice(0, 10)))]
@@ -313,12 +520,11 @@ export default function BirdHouseTracker() {
 
 	return (
 		<div>
-			{/* Stats — 4 cards, same layout as SlayerTracker */}
+			{/* Stats row */}
 			<div
-				className='bh-stats-grid'
 				style={{
 					display: 'grid',
-					gridTemplateColumns: 'repeat(4, 1fr)',
+					gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
 					gap: 10,
 					marginBottom: 20,
 				}}
@@ -328,17 +534,31 @@ export default function BirdHouseTracker() {
 					<span className='label'>Total Runs</span>
 				</div>
 				<div className='stat-card'>
-					<span className='value'>{totalNests.toLocaleString()}</span>
-					<span className='label'>Nests Found</span>
+					<span
+						className='value'
+						style={{ color: 'var(--gold)' }}
+					>
+						{totalYield}
+					</span>
+					<span className='label'>Total Yield</span>
 				</div>
 				<div className='stat-card'>
-					<span className='value'>{formatXp(totalHunterXp)}</span>
 					<span
-						className='label'
-						style={{ fontSize: '0.6rem' }}
+						className='value'
+						style={{ color: '#90e090' }}
 					>
-						Total XP (Hunter)
+						{totalHerbs}
 					</span>
+					<span className='label'>Herbs</span>
+				</div>
+				<div className='stat-card'>
+					<span
+						className='value'
+						style={{ color: '#e090d0' }}
+					>
+						{totalFlowers}
+					</span>
+					<span className='label'>Flowers</span>
 				</div>
 				<div className='stat-card'>
 					<div className='streak-flame'>🔥 {streak}</div>
@@ -359,7 +579,7 @@ export default function BirdHouseTracker() {
 					className='section-header'
 					style={{ marginBottom: 0 }}
 				>
-					<span>🏠</span> Recent Runs
+					<span>🌾</span> Recent Runs
 				</div>
 				<button
 					className='osrs-btn'
@@ -370,7 +590,7 @@ export default function BirdHouseTracker() {
 				</button>
 			</div>
 
-			{/* Entries */}
+			{/* Entries list */}
 			{!loaded ? (
 				<div
 					style={{ textAlign: 'center', padding: 32, color: 'var(--text-dim)' }}
@@ -379,10 +599,10 @@ export default function BirdHouseTracker() {
 				</div>
 			) : entries.length === 0 ? (
 				<div className='empty-state'>
-					<span style={{ fontSize: '3rem' }}>🏠</span>
-					<div>No bird house runs logged yet</div>
+					<span style={{ fontSize: '3rem' }}>🌾</span>
+					<div>No farming runs logged yet</div>
 					<div style={{ fontSize: '0.8rem' }}>
-						Track your daily runs on Fossil Island
+						Click &quot;Log Run&quot; to record your first harvest
 					</div>
 					<button
 						className='osrs-btn'
@@ -417,47 +637,68 @@ export default function BirdHouseTracker() {
 								})}
 							</span>
 
-							{/* Tier badge */}
-							<span
-								style={{
-									background: 'rgba(60,40,10,0.4)',
-									border: '1px solid rgba(160,120,40,0.3)',
-									borderRadius: 20,
-									padding: '2px 8px',
-									fontSize: '0.75rem',
-									color: '#c8a840',
-									whiteSpace: 'nowrap',
-								}}
-							>
-								🏠 {e.tier}
-							</span>
-
-							{/* Locations count */}
-							<span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-								{e.locations.length} locations
-							</span>
-
-							{/* Nests */}
-							<span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-								{e.nests} nests
-							</span>
-
-							{/* Seeds */}
-							<span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
-								{e.seeds} seeds
-							</span>
-
-							{/* Hunter XP */}
-							{e.hunterXp > 0 && (
+							{/* Herb badge (if any) */}
+							{e.herb && (
 								<span
 									style={{
-										fontSize: '0.72rem',
-										color: 'var(--gold-dim)',
-										fontWeight: 'bold',
-										marginLeft: 'auto',
+										background: 'rgba(32,96,32,0.3)',
+										border: '1px solid rgba(80,160,80,0.3)',
+										borderRadius: 20,
+										padding: '2px 8px',
+										fontSize: '0.75rem',
+										color: '#90e090',
+										whiteSpace: 'nowrap',
 									}}
 								>
-									{formatXp(e.hunterXp)} xp
+									🌿 {e.herb}
+								</span>
+							)}
+
+							{/* Flower badge (if any) */}
+							{e.flower && (
+								<span
+									style={{
+										background: 'rgba(140,40,120,0.2)',
+										border: '1px solid rgba(200,100,180,0.3)',
+										borderRadius: 20,
+										padding: '2px 8px',
+										fontSize: '0.75rem',
+										color: '#e090d0',
+										whiteSpace: 'nowrap',
+									}}
+								>
+									🌸 {e.flower}
+								</span>
+							)}
+
+							{/* Patches count */}
+							<span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+								{e.patches.length} patches
+							</span>
+
+							{/* Compost */}
+							<span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
+								{e.compost}
+							</span>
+
+							{/* Total yield */}
+							{e.totalYield > 0 && (
+								<span
+									style={{
+										marginLeft: 'auto',
+										fontSize: '0.82rem',
+										fontWeight: 'bold',
+										color: 'var(--gold)',
+									}}
+								>
+									{e.totalYield} yield
+								</span>
+							)}
+
+							{/* Yield breakdown (only if both are non-zero) */}
+							{e.yieldHerbs > 0 && e.yieldFlowers > 0 && (
+								<span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>
+									({e.yieldHerbs}h / {e.yieldFlowers}f)
 								</span>
 							)}
 
@@ -471,8 +712,10 @@ export default function BirdHouseTracker() {
 									cursor: 'pointer',
 									fontSize: '0.85rem',
 									padding: '2px 4px',
+									lineHeight: 1,
+									marginLeft: e.totalYield === 0 ? 'auto' : undefined,
 								}}
-								title='Delete'
+								title='Delete entry'
 							>
 								✕
 							</button>
@@ -481,6 +724,7 @@ export default function BirdHouseTracker() {
 				</div>
 			)}
 
+			{/* Modal */}
 			{showModal && (
 				<AddModal
 					onClose={() => setShowModal(false)}

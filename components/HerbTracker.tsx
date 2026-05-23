@@ -334,9 +334,10 @@ function AddModal({
 
 						{/* Yield fields (no profit, no xp) */}
 						<div
+							className='numbers-grid-3'
 							style={{
 								display: 'grid',
-								gridTemplateColumns: '1fr 1fr 1fr',
+								gridTemplateColumns: 'repeat(3, minmax(80px, 1fr))',
 								gap: 10,
 							}}
 						>
@@ -347,9 +348,10 @@ function AddModal({
 										color: 'var(--text-muted)',
 										display: 'block',
 										marginBottom: 4,
+										whiteSpace: 'nowrap',
 									}}
 								>
-									Yield (herbs)
+									Herbs yield
 								</label>
 								<input
 									className='osrs-input'
@@ -368,9 +370,10 @@ function AddModal({
 										color: 'var(--text-muted)',
 										display: 'block',
 										marginBottom: 4,
+										whiteSpace: 'nowrap',
 									}}
 								>
-									Yield (flowers)
+									Flowers yield
 								</label>
 								<input
 									className='osrs-input'
@@ -389,6 +392,7 @@ function AddModal({
 										color: 'var(--text-muted)',
 										display: 'block',
 										marginBottom: 4,
+										whiteSpace: 'nowrap',
 									}}
 								>
 									Total yield

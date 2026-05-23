@@ -39,10 +39,7 @@ export default function HomePage() {
 	const overall = result?.skills['Overall'];
 
 	return (
-		<div
-			className='page-container'
-			style={{ maxWidth: 1000, margin: '0 auto', padding: '24px 16px' }}
-		>
+		<div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 24px' }}>
 			{/* Page header */}
 			<div style={{ textAlign: 'center', marginBottom: 24 }}>
 				<h1
@@ -68,7 +65,6 @@ export default function HomePage() {
 				style={{ padding: '16px 20px', marginBottom: 20 }}
 			>
 				<div className='section-header'>🔍 Player Lookup</div>
-				{/* search-row applies flex-direction:column on mobile */}
 				<div
 					className='search-row'
 					style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}
@@ -235,7 +231,6 @@ export default function HomePage() {
 								Hover for rank · Gold = 99
 							</span>
 						</div>
-						{/* skill-grid-responsive controls columns at each breakpoint */}
 						<div
 							className='skill-grid-responsive'
 							style={{ display: 'grid', gap: 3 }}

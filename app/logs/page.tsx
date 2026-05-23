@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useLocalStorage } from '@/lib/useLocalStorage';
 import type { HerbEntry } from '@/components/HerbTracker';
 import type { BirdHouseEntry } from '@/components/BirdHouseTracker';
@@ -7,7 +7,6 @@ import type { SlayerEntry } from '@/components/SlayerTracker';
 
 // ── Helpers ──
 
-// All months for the dropdown
 const MONTH_NAMES = [
 	'January',
 	'February',
@@ -23,12 +22,10 @@ const MONTH_NAMES = [
 	'December',
 ];
 
-// Days in a given month/year
 function daysInMonth(year: number, month: number) {
 	return new Date(year, month + 1, 0).getDate();
 }
 
-// Build a Set of "YYYY-MM-DD" strings that have at least one entry
 function activeDays(
 	entries: { date: string }[],
 	year: number,
@@ -38,16 +35,28 @@ function activeDays(
 	for (const e of entries) {
 		const d = new Date(e.date);
 		if (d.getFullYear() === year && d.getMonth() === month) {
-			active.add(d.getDate()); // 1-based day number
+			active.add(d.getDate());
 		}
 	}
 	return active;
 }
 
-// Day-of-week for the 1st of the month (0=Sun…6=Sat), shifted to Mon-start (0=Mon…6=Sun)
 function firstDayOffset(year: number, month: number) {
-	const day = new Date(year, month, 1).getDay(); // 0=Sun
+	const day = new Date(year, month, 1).getDay();
 	return (day + 6) % 7; // Mon=0 … Sun=6
+}
+
+// ── Build last 12 months always ──
+function buildLast12Months(): string[] {
+	const now = new Date();
+	const months: string[] = [];
+	for (let i = 0; i < 12; i++) {
+		const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+		const y = d.getFullYear();
+		const m = String(d.getMonth() + 1).padStart(2, '0');
+		months.push(`${y}-${m}`);
+	}
+	return months; // already newest → oldest
 }
 
 // ── Activity Grid ──
@@ -68,16 +77,12 @@ function ActivityGrid({
 	const offset = firstDayOffset(year, month);
 	const activeCt = activeDaysSet.size;
 
-	// Day labels Mon–Sun
 	const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-	// Build cells: offset empty cells + day cells
 	const cells: (number | null)[] = [
 		...Array(offset).fill(null),
 		...Array.from({ length: total }, (_, i) => i + 1),
 	];
-
-	// Pad to complete last row
 	while (cells.length % 7 !== 0) cells.push(null);
 
 	return (
@@ -107,7 +112,6 @@ function ActivityGrid({
 						{label}
 					</span>
 				</div>
-				{/* Score badge — OSRS Collections Logged style */}
 				<div
 					style={{
 						background: 'rgba(0,0,0,0.35)',
@@ -127,9 +131,8 @@ function ActivityGrid({
 				</div>
 			</div>
 
-			{/* Grid — columns = Mon…Sun, rows = weeks */}
+			{/* Grid */}
 			<div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-				{/* Day-of-week header row */}
 				<div
 					style={{
 						display: 'grid',
@@ -152,7 +155,6 @@ function ActivityGrid({
 					))}
 				</div>
 
-				{/* Week rows */}
 				{Array.from({ length: cells.length / 7 }, (_, week) => (
 					<div
 						key={week}
@@ -253,25 +255,12 @@ export default function LogsPage() {
 	const [bh] = useLocalStorage<BirdHouseEntry[]>('osrs-bird-houses', []);
 	const [slayer] = useLocalStorage<SlayerEntry[]>('osrs-slayer', []);
 
-	// Build active day sets for the selected month
 	const herbDays = activeDays(herbs, selectedYear, selectedMonth);
 	const bhDays = activeDays(bh, selectedYear, selectedMonth);
 	const slayerDays = activeDays(slayer, selectedYear, selectedMonth);
 
-	// Month options: current month + all previous months that have any data
-	const allDates = [
-		...herbs.map((e) => e.date.slice(0, 7)),
-		...bh.map((e) => e.date.slice(0, 7)),
-		...slayer.map((e) => e.date.slice(0, 7)),
-	];
-	const uniqueMonths = [
-		...new Set([
-			`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
-			...allDates,
-		]),
-	]
-		.sort()
-		.reverse();
+	// ── Always show the last 12 months ──
+	const monthOptions = buildLast12Months();
 
 	const handleMonthChange = (val: string) => {
 		const [y, m] = val.split('-').map(Number);
@@ -282,10 +271,7 @@ export default function LogsPage() {
 	const selectedValue = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
 
 	return (
-		<div
-			className='page-container'
-			style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 24px' }}
-		>
+		<div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 24px' }}>
 			{/* Header */}
 			<div
 				style={{
@@ -315,14 +301,14 @@ export default function LogsPage() {
 					</p>
 				</div>
 
-				{/* Month selector */}
+				{/* Month selector — always 12 months */}
 				<select
 					className='osrs-input'
 					value={selectedValue}
 					onChange={(e) => handleMonthChange(e.target.value)}
 					style={{ fontSize: '0.85rem', cursor: 'pointer', minWidth: 160 }}
 				>
-					{uniqueMonths.map((ym) => {
+					{monthOptions.map((ym) => {
 						const [y, m] = ym.split('-').map(Number);
 						return (
 							<option
@@ -336,7 +322,7 @@ export default function LogsPage() {
 				</select>
 			</div>
 
-			{/* Grids — one per tracker, in dashboard order */}
+			{/* Grids */}
 			<div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 				<ActivityGrid
 					label='Farming Runs'
