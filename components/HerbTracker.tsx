@@ -480,6 +480,73 @@ function AddModal({
 	);
 }
 
+// ── Confirm clear modal ──
+function ClearConfirmModal({
+	label,
+	onClose,
+	onConfirm,
+}: {
+	label: string;
+	onClose: () => void;
+	onConfirm: () => void;
+}) {
+	return (
+		<div
+			className='modal-overlay'
+			onClick={onClose}
+		>
+			<div
+				className='osrs-panel modal-box'
+				style={{ maxWidth: 360 }}
+				onClick={(e) => e.stopPropagation()}
+			>
+				<div style={{ padding: 24 }}>
+					<h2
+						style={{
+							color: 'var(--gold)',
+							fontWeight: 'bold',
+							fontSize: '1rem',
+							marginBottom: 12,
+						}}
+					>
+						🗑 Clear {label}?
+					</h2>
+					<p
+						style={{
+							color: 'var(--text-muted)',
+							fontSize: '0.82rem',
+							marginBottom: 20,
+							lineHeight: 1.5,
+						}}
+					>
+						This will permanently delete all logged entries. This action cannot
+						be undone.
+					</p>
+					<div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+						<button
+							className='osrs-btn'
+							onClick={onClose}
+							style={{ padding: '8px 20px' }}
+						>
+							Cancel
+						</button>
+						<button
+							className='osrs-btn-red'
+							onClick={() => {
+								onConfirm();
+								onClose();
+							}}
+							style={{ padding: '8px 20px' }}
+						>
+							Clear all
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
 // ── Main tracker component ──
 export default function HerbTracker() {
 	const [entries, setEntries, loaded] = useLocalStorage<HerbEntry[]>(
@@ -487,10 +554,12 @@ export default function HerbTracker() {
 		[],
 	);
 	const [showModal, setShowModal] = useState(false);
+	const [showClear, setShowClear] = useState(false);
 
 	const addEntry = (e: HerbEntry) => setEntries((prev) => [e, ...prev]);
 	const deleteEntry = (id: string) =>
 		setEntries((prev) => prev.filter((e) => e.id !== id));
+	const clearAll = () => setEntries([]);
 
 	// Stats
 	const totalRuns = entries.length;
@@ -581,13 +650,25 @@ export default function HerbTracker() {
 				>
 					<span>🌾</span> Recent Runs
 				</div>
-				<button
-					className='osrs-btn'
-					onClick={() => setShowModal(true)}
-					style={{ padding: '6px 18px', fontSize: '0.82rem' }}
-				>
-					+ Log Run
-				</button>
+				<div style={{ display: 'flex', gap: 8 }}>
+					{entries.length > 0 && (
+						<button
+							className='osrs-btn-red'
+							onClick={() => setShowClear(true)}
+							style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+							title='Clear all farming runs'
+						>
+							🗑 Clear
+						</button>
+					)}
+					<button
+						className='osrs-btn'
+						onClick={() => setShowModal(true)}
+						style={{ padding: '6px 18px', fontSize: '0.82rem' }}
+					>
+						+ Log Run
+					</button>
+				</div>
 			</div>
 
 			{/* Entries list */}
@@ -729,6 +810,13 @@ export default function HerbTracker() {
 				<AddModal
 					onClose={() => setShowModal(false)}
 					onSave={addEntry}
+				/>
+			)}
+			{showClear && (
+				<ClearConfirmModal
+					label='Farming Runs'
+					onClose={() => setShowClear(false)}
+					onConfirm={clearAll}
 				/>
 			)}
 		</div>
