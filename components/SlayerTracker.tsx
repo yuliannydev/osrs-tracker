@@ -11,11 +11,9 @@ export type SlayerEntry = {
 	amount: number;
 	slayerPoints: number;
 	xpPerKill: number;
-	totalXp: number; // amount × xpPerKill, calculado al guardar
-	status: 'complete' | 'cancelled';
+	totalXp: number; // amount × xpPerKill, computed on save
 };
 
-// Common slayer monsters per master (simplified)
 const COMMON_MONSTERS = [
 	'Aberrant Spectres',
 	'Abyssal Demons',
@@ -62,6 +60,29 @@ const COMMON_MONSTERS = [
 	'Zombies',
 ];
 
+// Points per task per master — source: https://oldschool.runescape.wiki/w/Slayer_Master
+const MASTER_POINTS: Record<
+	string,
+	{ base: number; elite?: number; diaryNote?: string }
+> = {
+	Turael: { base: 0 },
+	Spria: { base: 0 },
+	Mazchna: { base: 6 },
+	Vannaka: { base: 8 },
+	Chaeldar: { base: 10 },
+	Konar: {
+		base: 18,
+		elite: 20,
+		diaryNote: '20 pts with Elite Kourend & Kebos Diary',
+	},
+	Nieve: {
+		base: 12,
+		elite: 15,
+		diaryNote: '15 pts with Elite Western Provinces Diary',
+	},
+	Duradel: { base: 15 },
+};
+
 function Chips({
 	options,
 	selected,
@@ -98,11 +119,20 @@ function AddModal({
 	const [monster, setMonster] = useState('');
 	const [customMonster, setCustomMonster] = useState('');
 	const [amount, setAmount] = useState(0);
-	const [points, setPoints] = useState(0);
 	const [xpPerKill, setXpPerKill] = useState(0);
-	const [status, setStatus] = useState<'complete' | 'cancelled'>('complete');
+
+	// Points auto-derived from master; overridable for diary users
+	const [pointsOverride, setPointsOverride] = useState<number | null>(null);
+	const masterData = MASTER_POINTS[master] ?? { base: 0 };
+	const effectivePoints = pointsOverride ?? masterData.base;
 
 	const effectiveMonster = customMonster.trim() || monster;
+
+	// Reset diary override when switching master
+	const handleMasterChange = (m: string) => {
+		setMaster(m);
+		setPointsOverride(null);
+	};
 
 	const handleSave = () => {
 		if (!effectiveMonster || !master) return;
@@ -112,10 +142,9 @@ function AddModal({
 			master,
 			monster: effectiveMonster,
 			amount,
-			slayerPoints: points,
+			slayerPoints: effectivePoints,
 			xpPerKill,
 			totalXp: amount * xpPerKill,
-			status,
 		});
 		onClose();
 	};
@@ -173,7 +202,7 @@ function AddModal({
 							<Chips
 								options={SLAYER_MASTERS}
 								selected={[master]}
-								onToggle={setMaster}
+								onToggle={handleMasterChange}
 							/>
 						</div>
 
@@ -223,7 +252,7 @@ function AddModal({
 							/>
 						</div>
 
-						{/* Numbers — kill count, xp per kill, total xp auto-computed */}
+						{/* Kill count / XP per kill / Total XP (auto) */}
 						<div
 							style={{
 								display: 'grid',
@@ -284,6 +313,7 @@ function AddModal({
 								>
 									Total XP
 								</label>
+								{/* Read-only, auto-computed */}
 								<div
 									style={{
 										background: 'rgba(0,0,0,0.35)',
@@ -306,51 +336,74 @@ function AddModal({
 							</div>
 						</div>
 
-						<div
-							style={{
-								display: 'grid',
-								gridTemplateColumns: '1fr 1fr',
-								gap: 10,
-							}}
-						>
-							<div>
-								<div
-									className='section-header'
-									style={{ marginBottom: 8 }}
-								>
-									Status
-								</div>
-								<div style={{ display: 'flex', gap: 8 }}>
-									<button
-										type='button'
-										className={
-											'chip' + (status === 'complete' ? ' selected' : '')
-										}
-										onClick={() => setStatus('complete')}
-										style={{ flex: 1, justifyContent: 'center' }}
-									>
-										✓ Complete
-									</button>
-									<button
-										type='button'
-										className={
-											'chip' + (status === 'cancelled' ? ' selected' : '')
-										}
-										onClick={() => setStatus('cancelled')}
-										style={{
-											flex: 1,
-											justifyContent: 'center',
-											borderColor:
-												status === 'cancelled' ? '#cc4444' : undefined,
-											color: status === 'cancelled' ? '#cc4444' : undefined,
-										}}
-									>
-										✕ Skip
-									</button>
-								</div>
+						{/* Points per task — auto from master, overridable for diary users */}
+						<div>
+							<div
+								className='section-header'
+								style={{ marginBottom: 8 }}
+							>
+								Points per Task
 							</div>
+							<div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+								<div
+									style={{
+										background: 'rgba(0,0,0,0.35)',
+										border: '1px solid var(--border)',
+										borderRadius: 2,
+										padding: '6px 10px',
+										fontSize: '0.9rem',
+										fontWeight: 'bold',
+										color:
+											effectivePoints > 0 ? 'var(--gold)' : 'var(--text-dim)',
+										minWidth: 60,
+										display: 'flex',
+										alignItems: 'center',
+									}}
+								>
+									{effectivePoints} pts
+								</div>
+								{/* Diary override — only for Konar and Nieve/Steve */}
+								{masterData.elite && (
+									<div style={{ display: 'flex', gap: 6 }}>
+										<button
+											type='button'
+											className={
+												'chip' + (pointsOverride === null ? ' selected' : '')
+											}
+											onClick={() => setPointsOverride(null)}
+										>
+											{masterData.base} pts (base)
+										</button>
+										<button
+											type='button'
+											className={
+												'chip' +
+												(pointsOverride === masterData.elite ? ' selected' : '')
+											}
+											onClick={() =>
+												setPointsOverride(masterData.elite ?? null)
+											}
+										>
+											{masterData.elite} pts (diary ✓)
+										</button>
+									</div>
+								)}
+							</div>
+							{masterData.diaryNote && (
+								<div
+									style={{
+										fontSize: '0.7rem',
+										color: 'var(--text-dim)',
+										marginTop: 6,
+										fontStyle: 'italic',
+									}}
+								>
+									ℹ {masterData.diaryNote}
+								</div>
+							)}
 						</div>
 
+						{/* Actions */}
 						<div
 							style={{
 								display: 'flex',
@@ -396,20 +449,12 @@ export default function SlayerTracker() {
 	const deleteEntry = (id: string) =>
 		setEntries((prev) => prev.filter((e) => e.id !== id));
 
-	const completed = entries.filter((e) => e.status === 'complete');
-	const totalKills = completed.reduce((s, e) => s + e.amount, 0);
-	const totalPoints = completed.reduce((s, e) => s + e.slayerPoints, 0);
+	const totalKills = entries.reduce((s, e) => s + e.amount, 0);
+	const totalPoints = entries.reduce((s, e) => s + e.slayerPoints, 0);
 	const totalXp = entries.reduce((s, e) => s + e.totalXp, 0);
 
-	// Consecutive completed streak (no cancelled in a row)
-	const streak = (() => {
-		let count = 0;
-		for (const e of entries) {
-			if (e.status === 'complete') count++;
-			else break;
-		}
-		return count;
-	})();
+	// Consecutive task streak
+	const streak = entries.length;
 
 	return (
 		<div>
@@ -423,7 +468,7 @@ export default function SlayerTracker() {
 				}}
 			>
 				<div className='stat-card'>
-					<span className='value'>{completed.length}</span>
+					<span className='value'>{entries.length}</span>
 					<span className='label'>Tasks Done</span>
 				</div>
 				<div className='stat-card'>
@@ -485,7 +530,7 @@ export default function SlayerTracker() {
 					<span style={{ fontSize: '3rem' }}>💀</span>
 					<div>No slayer tasks logged yet</div>
 					<div style={{ fontSize: '0.8rem' }}>
-						Start tracking your tasks, streaks, and profits
+						Start tracking your tasks, streaks, and XP
 					</div>
 					<button
 						className='osrs-btn'
@@ -513,26 +558,11 @@ export default function SlayerTracker() {
 								{new Date(e.date).toLocaleDateString('en-GB', {
 									day: '2-digit',
 									month: 'short',
+								})}{' '}
+								{new Date(e.date).toLocaleTimeString('en-GB', {
+									hour: '2-digit',
+									minute: '2-digit',
 								})}
-							</span>
-
-							{/* Status badge */}
-							<span
-								style={{
-									background:
-										e.status === 'complete'
-											? 'rgba(32,100,32,0.3)'
-											: 'rgba(100,30,30,0.3)',
-									border: `1px solid ${e.status === 'complete' ? 'rgba(80,160,80,0.3)' : 'rgba(160,60,60,0.3)'}`,
-									borderRadius: 20,
-									padding: '2px 8px',
-									fontSize: '0.7rem',
-									color: e.status === 'complete' ? '#80cc80' : '#cc8080',
-									minWidth: 76,
-									textAlign: 'center',
-								}}
-							>
-								{e.status === 'complete' ? '✓ Done' : '✕ Skip'}
 							</span>
 
 							{/* Monster */}
@@ -547,7 +577,7 @@ export default function SlayerTracker() {
 								{e.master}
 							</span>
 
-							{/* Amount */}
+							{/* Kill count */}
 							{e.amount > 0 && (
 								<span
 									style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}
@@ -556,7 +586,7 @@ export default function SlayerTracker() {
 								</span>
 							)}
 
-							{/* Points */}
+							{/* Slayer points */}
 							{e.slayerPoints > 0 && (
 								<span
 									style={{
@@ -569,7 +599,7 @@ export default function SlayerTracker() {
 								</span>
 							)}
 
-							{/* XP */}
+							{/* Total XP */}
 							{e.totalXp > 0 && (
 								<span
 									style={{

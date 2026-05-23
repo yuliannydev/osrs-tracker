@@ -7,20 +7,15 @@ import { useLocalStorage } from '@/lib/useLocalStorage';
 import type { HerbEntry } from '@/components/HerbTracker';
 import type { BirdHouseEntry } from '@/components/BirdHouseTracker';
 import type { SlayerEntry } from '@/components/SlayerTracker';
-import { formatGp, formatXp } from '@/lib/osrs-data';
 
-// ── Summary bar across all trackers ──
+// ── Summary bar — only habit-level stats, no profit/xp (those live inside each tab) ──
 function GlobalSummary() {
 	const [herbs] = useLocalStorage<HerbEntry[]>('osrs-herb-runs', []);
 	const [bh] = useLocalStorage<BirdHouseEntry[]>('osrs-bird-houses', []);
 	const [slayer] = useLocalStorage<SlayerEntry[]>('osrs-slayer', []);
 
-	// Farming runs track yield (not profit/xp)
 	const totalHerbYield = herbs.reduce((s, e) => s + e.totalYield, 0);
-
-	// Slayer kill/xp
-	const totalXp = slayer.reduce((s, e) => s + e.totalXp, 0);
-
+	const totalNests = bh.reduce((s, e) => s + e.nests, 0);
 	const totalActivities = herbs.length + bh.length + slayer.length;
 
 	return (
@@ -57,6 +52,10 @@ function GlobalSummary() {
 					<strong style={{ color: 'var(--gold)' }}>{totalHerbYield}</strong>
 				</span>
 				<span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+					Nests found:{' '}
+					<strong style={{ color: 'var(--gold)' }}>{totalNests}</strong>
+				</span>
+				<span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
 					Farming Runs:{' '}
 					<strong style={{ color: 'var(--text-primary)' }}>
 						{herbs.length}
@@ -77,17 +76,15 @@ function GlobalSummary() {
 	);
 }
 
-// Tab items — first one renamed to Farming Run
 const TAB_ITEMS = [
 	{ value: 'herbs', icon: '🌾', label: 'Farming Runs' },
 	{ value: 'birdhouse', icon: '🏠', label: 'Bird Houses' },
-	{ value: 'slayer', icon: '💀', label: 'Slayer Task' },
+	{ value: 'slayer', icon: '💀', label: 'Slayer' },
 ];
 
 export default function DashboardPage() {
 	return (
 		<div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 24px' }}>
-			{/* Page header */}
 			<div style={{ marginBottom: 28 }}>
 				<h1
 					style={{
@@ -107,10 +104,8 @@ export default function DashboardPage() {
 				</p>
 			</div>
 
-			{/* Global summary */}
 			<GlobalSummary />
 
-			{/* Tabs */}
 			<Tabs.Root defaultValue='herbs'>
 				<Tabs.List
 					className='osrs-tabs-list'
@@ -135,7 +130,6 @@ export default function DashboardPage() {
 						<HerbTracker />
 					</div>
 				</Tabs.Content>
-
 				<Tabs.Content value='birdhouse'>
 					<div
 						className='osrs-panel'
@@ -144,7 +138,6 @@ export default function DashboardPage() {
 						<BirdHouseTracker />
 					</div>
 				</Tabs.Content>
-
 				<Tabs.Content value='slayer'>
 					<div
 						className='osrs-panel'
@@ -155,7 +148,6 @@ export default function DashboardPage() {
 				</Tabs.Content>
 			</Tabs.Root>
 
-			{/* Footer */}
 			<div
 				style={{
 					marginTop: 32,
@@ -168,17 +160,6 @@ export default function DashboardPage() {
 			>
 				Data stored locally in your browser · No account required ·{' '}
 				<span style={{ color: 'var(--gold-dim)' }}>OSRS Tracker v1.0</span>
-				<span style={{ color: 'var(--gold-dim)' }}>
-					{' '}
-					Built with ☕ and too many tabs open By{' '}
-					<a
-						href='https://github.com/yuliannydev/'
-						target='_blank'
-						rel='noopener noreferrer'
-					>
-						Yulianny B.
-					</a>
-				</span>
 			</div>
 		</div>
 	);
