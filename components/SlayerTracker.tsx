@@ -580,7 +580,7 @@ export default function SlayerTracker() {
 								<span
 									style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}
 								>
-									{e.amount.toLocaleString()}x
+									{e.amount.toLocaleString()}kc
 								</span>
 							)}
 
