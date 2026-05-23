@@ -254,6 +254,7 @@ function AddModal({
 
 						{/* Kill count / XP per kill / Total XP (auto) */}
 						<div
+							className='numbers-grid-3'
 							style={{
 								display: 'grid',
 								gridTemplateColumns: '1fr 1fr 1fr',
@@ -485,12 +486,7 @@ export default function SlayerTracker() {
 				</div>
 				<div className='stat-card'>
 					<div className='streak-flame'>🔥 {streak}</div>
-					<span
-						className='label'
-						style={{ marginTop: 4 }}
-					>
-						Task Streak
-					</span>
+					<span className='label'>Task Streak</span>
 				</div>
 			</div>
 
@@ -549,6 +545,7 @@ export default function SlayerTracker() {
 						>
 							{/* Date */}
 							<span
+								className='entry-date'
 								style={{
 									fontSize: '0.72rem',
 									color: 'var(--text-dim)',
@@ -567,6 +564,7 @@ export default function SlayerTracker() {
 
 							{/* Monster */}
 							<span
+								className='entry-monster'
 								style={{ fontSize: '0.82rem', fontWeight: 'bold', flex: 1 }}
 							>
 								💀 {e.monster}

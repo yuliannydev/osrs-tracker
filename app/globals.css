@@ -1,389 +1,633 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ── OSRS Dark Theme ── */
 :root {
-  /* Wood panel palette */
-  --bg-dark:       #1a1208;
-  --bg-panel:      #2a1f15;
-  --bg-panel-mid:  #3d2e1e;
-  --bg-panel-light:#4a3826;
-  --bg-hover:      #5a4535;
+	/* Wood panel palette */
+	--bg-dark: #1a1208;
+	--bg-panel: #2a1f15;
+	--bg-panel-mid: #3d2e1e;
+	--bg-panel-light: #4a3826;
+	--bg-hover: #5a4535;
 
-  /* Gold accents */
-  --gold:          #FF9900;
-  --gold-bright:   #FFB800;
-  --gold-dim:      #b36e00;
-  --gold-glow:     rgba(255,153,0,0.35);
+	/* Gold accents */
+	--gold: #ff9900;
+	--gold-bright: #ffb800;
+	--gold-dim: #b36e00;
+	--gold-glow: rgba(255, 153, 0, 0.35);
 
-  /* Text */
-  --text-primary:  #f0e8d0;
-  --text-muted:    #a89060;
-  --text-dim:      #6a5a40;
+	/* Text */
+	--text-primary: #f0e8d0;
+	--text-muted: #a89060;
+	--text-dim: #6a5a40;
 
-  /* Skill colors */
-  --skill-attack:   #c42e2e;
-  --skill-strength: #2f6b2f;
-  --skill-defence:  #3b7fbf;
-  --skill-ranged:   #5a8a2f;
-  --skill-prayer:   #e8e0b0;
-  --skill-magic:    #5050d0;
-  --skill-runecraft:#cfaf00;
-  --skill-hitpoints:#a02020;
-  --skill-crafting: #b09000;
-  --skill-mining:   #808080;
-  --skill-smithing: #805020;
-  --skill-fishing:  #3080b0;
-  --skill-cooking:  #b05000;
-  --skill-firemaking:#c04000;
-  --skill-woodcutting:#5a8030;
-  --skill-agility:  #6060a0;
-  --skill-herblore: #206020;
-  --skill-thieving: #703070;
-  --skill-fletching:#608030;
-  --skill-slayer:   #202020;
-  --skill-farming:  #407040;
-  --skill-construction:#906000;
-  --skill-hunter:   #704020;
-  --skill-overall:  #c0a000;
+	/* Skill colors */
+	--skill-attack: #c42e2e;
+	--skill-strength: #2f6b2f;
+	--skill-defence: #3b7fbf;
+	--skill-ranged: #5a8a2f;
+	--skill-prayer: #e8e0b0;
+	--skill-magic: #5050d0;
+	--skill-runecraft: #cfaf00;
+	--skill-hitpoints: #a02020;
+	--skill-crafting: #b09000;
+	--skill-mining: #808080;
+	--skill-smithing: #805020;
+	--skill-fishing: #3080b0;
+	--skill-cooking: #b05000;
+	--skill-firemaking: #c04000;
+	--skill-woodcutting: #5a8030;
+	--skill-agility: #6060a0;
+	--skill-herblore: #206020;
+	--skill-thieving: #703070;
+	--skill-fletching: #608030;
+	--skill-slayer: #202020;
+	--skill-farming: #407040;
+	--skill-construction: #906000;
+	--skill-hunter: #704020;
+	--skill-overall: #c0a000;
 
-  /* Status */
-  --green:  #3aaa3a;
-  --red:    #cc3333;
-  --blue:   #3366cc;
-  --border: rgba(255,153,0,0.2);
-  --border-bright: rgba(255,153,0,0.5);
+	/* Status */
+	--green: #3aaa3a;
+	--red: #cc3333;
+	--blue: #3366cc;
+	--border: rgba(255, 153, 0, 0.2);
+	--border-bright: rgba(255, 153, 0, 0.5);
 }
 
 @theme inline {
-  --color-background: var(--bg-dark);
-  --color-foreground: var(--text-primary);
+	--color-background: var(--bg-dark);
+	--color-foreground: var(--text-primary);
 }
 
-* { box-sizing: border-box; }
+* {
+	box-sizing: border-box;
+}
 
-html, body {
-  background: var(--bg-dark);
-  color: var(--text-primary);
-  font-family: 'Courier New', 'Lucida Console', monospace;
-  min-height: 100vh;
+html,
+body {
+	background: var(--bg-dark);
+	color: var(--text-primary);
+	font-family: 'Courier New', 'Lucida Console', monospace;
+	min-height: 100vh;
 }
 
 /* ── Scrollbar ── */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--bg-dark); }
-::-webkit-scrollbar-thumb { background: var(--bg-panel-mid); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--gold-dim); }
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+::-webkit-scrollbar-track {
+	background: var(--bg-dark);
+}
+::-webkit-scrollbar-thumb {
+	background: var(--bg-panel-mid);
+	border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+	background: var(--gold-dim);
+}
 
 /* ── OSRS Panel ── */
 .osrs-panel {
-  background: linear-gradient(180deg, var(--bg-panel-light) 0%, var(--bg-panel) 100%);
-  border: 2px solid var(--border-bright);
-  border-radius: 4px;
-  box-shadow:
-    inset 0 1px 0 rgba(255,220,100,0.15),
-    inset 0 -1px 0 rgba(0,0,0,0.4),
-    0 4px 16px rgba(0,0,0,0.6);
+	background: linear-gradient(
+		180deg,
+		var(--bg-panel-light) 0%,
+		var(--bg-panel) 100%
+	);
+	border: 2px solid var(--border-bright);
+	border-radius: 4px;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 220, 100, 0.15),
+		inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+		0 4px 16px rgba(0, 0, 0, 0.6);
 }
 
 .osrs-panel-dark {
-  background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-dark) 100%);
-  border: 1px solid var(--border);
-  border-radius: 4px;
+	background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-dark) 100%);
+	border: 1px solid var(--border);
+	border-radius: 4px;
 }
 
 /* ── Gold border inset ── */
 .osrs-inset {
-  border: 2px inset rgba(0,0,0,0.5);
-  box-shadow: inset 0 0 8px rgba(0,0,0,0.5);
-  background: rgba(0,0,0,0.3);
+	border: 2px inset rgba(0, 0, 0, 0.5);
+	box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+	background: rgba(0, 0, 0, 0.3);
 }
 
 /* ── OSRS Button ── */
 .osrs-btn {
-  background: linear-gradient(180deg, #5a8a3a 0%, #3a6020 50%, #2a4a18 100%);
-  border: 2px solid #6aaa4a;
-  border-bottom-color: #1a3010;
-  border-right-color: #1a3010;
-  color: var(--text-primary);
-  font-family: inherit;
-  font-weight: bold;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-  cursor: pointer;
-  transition: all 0.1s;
-  padding: 6px 16px;
-  border-radius: 3px;
+	background: linear-gradient(180deg, #5a8a3a 0%, #3a6020 50%, #2a4a18 100%);
+	border: 2px solid #6aaa4a;
+	border-bottom-color: #1a3010;
+	border-right-color: #1a3010;
+	color: var(--text-primary);
+	font-family: inherit;
+	font-weight: bold;
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+	cursor: pointer;
+	transition: all 0.1s;
+	padding: 6px 16px;
+	border-radius: 3px;
 }
 .osrs-btn:hover {
-  background: linear-gradient(180deg, #6aaa4a 0%, #4a7030 50%, #3a5a20 100%);
-  border-color: #8aca6a;
+	background: linear-gradient(180deg, #6aaa4a 0%, #4a7030 50%, #3a5a20 100%);
+	border-color: #8aca6a;
 }
 .osrs-btn:active {
-  transform: translateY(1px);
-  box-shadow: none;
+	transform: translateY(1px);
+	box-shadow: none;
 }
 
 .osrs-btn-gold {
-  background: linear-gradient(180deg, #c8880a 0%, #9a6000 50%, #704800 100%);
-  border: 2px solid #e8a820;
-  border-bottom-color: #503000;
-  border-right-color: #503000;
-  color: #fff8e0;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+	background: linear-gradient(180deg, #c8880a 0%, #9a6000 50%, #704800 100%);
+	border: 2px solid #e8a820;
+	border-bottom-color: #503000;
+	border-right-color: #503000;
+	color: #fff8e0;
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 .osrs-btn-gold:hover {
-  background: linear-gradient(180deg, #e8a820 0%, #b07010 50%, #805800 100%);
+	background: linear-gradient(180deg, #e8a820 0%, #b07010 50%, #805800 100%);
 }
 
 .osrs-btn-red {
-  background: linear-gradient(180deg, #8a3a3a 0%, #602020 50%, #481818 100%);
-  border: 2px solid #aa5a5a;
-  border-bottom-color: #301010;
-  border-right-color: #301010;
-  color: #ffe0e0;
+	background: linear-gradient(180deg, #8a3a3a 0%, #602020 50%, #481818 100%);
+	border: 2px solid #aa5a5a;
+	border-bottom-color: #301010;
+	border-right-color: #301010;
+	color: #ffe0e0;
 }
 .osrs-btn-red:hover {
-  background: linear-gradient(180deg, #aa5a5a 0%, #783030 50%, #582020 100%);
+	background: linear-gradient(180deg, #aa5a5a 0%, #783030 50%, #582020 100%);
 }
 
 /* ── Input ── */
 .osrs-input {
-  background: rgba(0,0,0,0.5);
-  border: 1px solid var(--border-bright);
-  color: var(--text-primary);
-  font-family: inherit;
-  border-radius: 2px;
-  padding: 6px 10px;
-  outline: none;
-  transition: border-color 0.2s;
+	background: rgba(0, 0, 0, 0.5);
+	border: 1px solid var(--border-bright);
+	color: var(--text-primary);
+	font-family: inherit;
+	border-radius: 2px;
+	padding: 6px 10px;
+	outline: none;
+	transition: border-color 0.2s;
 }
 .osrs-input:focus {
-  border-color: var(--gold);
-  box-shadow: 0 0 6px var(--gold-glow);
+	border-color: var(--gold);
+	box-shadow: 0 0 6px var(--gold-glow);
 }
-.osrs-input::placeholder { color: var(--text-dim); }
+.osrs-input::placeholder {
+	color: var(--text-dim);
+}
 
 /* ── Gold text ── */
-.gold { color: var(--gold); }
-.gold-bright { color: var(--gold-bright); }
+.gold {
+	color: var(--gold);
+}
+.gold-bright {
+	color: var(--gold-bright);
+}
 
 /* ── Skill grid ── */
 .skill-cell {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 8px 4px;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: all 0.15s;
-  border: 1px solid transparent;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	padding: 8px 4px;
+	border-radius: 3px;
+	cursor: pointer;
+	transition: all 0.15s;
+	border: 1px solid transparent;
 }
 .skill-cell:hover {
-  background: rgba(255,153,0,0.12);
-  border-color: var(--border-bright);
+	background: rgba(255, 153, 0, 0.12);
+	border-color: var(--border-bright);
 }
 .skill-cell.maxed {
-  box-shadow: 0 0 10px var(--gold-glow), inset 0 0 6px rgba(255,180,0,0.1);
-  border-color: var(--gold-dim);
-  animation: goldPulse 2s ease-in-out infinite;
+	box-shadow:
+		0 0 10px var(--gold-glow),
+		inset 0 0 6px rgba(255, 180, 0, 0.1);
+	border-color: var(--gold-dim);
+	animation: goldPulse 2s ease-in-out infinite;
 }
 @keyframes goldPulse {
-  0%, 100% { box-shadow: 0 0 8px var(--gold-glow); }
-  50%       { box-shadow: 0 0 18px rgba(255,153,0,0.6); }
+	0%,
+	100% {
+		box-shadow: 0 0 8px var(--gold-glow);
+	}
+	50% {
+		box-shadow: 0 0 18px rgba(255, 153, 0, 0.6);
+	}
 }
 
 /* ── Tabs ── */
 .osrs-tabs-list {
-  display: flex;
-  gap: 2px;
-  background: rgba(0,0,0,0.4);
-  padding: 4px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
+	display: flex;
+	gap: 2px;
+	background: rgba(0, 0, 0, 0.4);
+	padding: 4px;
+	border-radius: 4px;
+	border: 1px solid var(--border);
 }
 .osrs-tab {
-  flex: 1;
-  padding: 8px 16px;
-  border-radius: 3px;
-  text-align: center;
-  cursor: pointer;
-  color: var(--text-muted);
-  border: 1px solid transparent;
-  font-family: inherit;
-  font-weight: bold;
-  transition: all 0.15s;
-  background: transparent;
-  font-size: 0.85rem;
+	flex: 1;
+	padding: 8px 16px;
+	border-radius: 3px;
+	text-align: center;
+	cursor: pointer;
+	color: var(--text-muted);
+	border: 1px solid transparent;
+	font-family: inherit;
+	font-weight: bold;
+	transition: all 0.15s;
+	background: transparent;
+	font-size: 0.85rem;
 }
-.osrs-tab:hover { color: var(--text-primary); background: rgba(255,153,0,0.08); }
-.osrs-tab[data-state=active] {
-  background: linear-gradient(180deg, var(--bg-panel-light) 0%, var(--bg-panel-mid) 100%);
-  border-color: var(--border-bright);
-  color: var(--gold);
-  text-shadow: 0 0 8px var(--gold-glow);
+.osrs-tab:hover {
+	color: var(--text-primary);
+	background: rgba(255, 153, 0, 0.08);
+}
+.osrs-tab[data-state='active'] {
+	background: linear-gradient(
+		180deg,
+		var(--bg-panel-light) 0%,
+		var(--bg-panel-mid) 100%
+	);
+	border-color: var(--border-bright);
+	color: var(--gold);
+	text-shadow: 0 0 8px var(--gold-glow);
 }
 
 /* ── Stat cards ── */
 .stat-card {
-  background: rgba(0,0,0,0.3);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 12px 16px;
-  text-align: center;
+	background: rgba(0, 0, 0, 0.3);
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	padding: 12px 16px;
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
 }
 .stat-card .value {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: var(--gold);
-  display: block;
+	font-size: 1.5rem;
+	font-weight: bold;
+	color: var(--gold);
+	display: block;
 }
 .stat-card .label {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+	font-size: 0.7rem;
+	color: var(--text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
 }
 
 /* ── Streak flame ── */
 .streak-flame {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: linear-gradient(135deg, rgba(255,80,0,0.2), rgba(255,153,0,0.2));
-  border: 1px solid rgba(255,120,0,0.4);
-  border-radius: 20px;
-  padding: 4px 10px;
-  font-weight: bold;
-  color: #ffaa00;
-  font-size: 0.9rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	background: linear-gradient(
+		135deg,
+		rgba(255, 80, 0, 0.2),
+		rgba(255, 153, 0, 0.2)
+	);
+	border: 1px solid rgba(255, 120, 0, 0.4);
+	border-radius: 20px;
+	padding: 4px 14px 4px 10px;
+	font-weight: bold;
+	color: #ffaa00;
+	font-size: 0.9rem;
+	white-space: nowrap;
 }
 
 /* ── Entry row ── */
 .entry-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 3px;
-  border: 1px solid transparent;
-  transition: all 0.1s;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	border-radius: 3px;
+	border: 1px solid transparent;
+	transition: all 0.1s;
 }
 .entry-row:hover {
-  background: rgba(255,153,0,0.06);
-  border-color: var(--border);
+	background: rgba(255, 153, 0, 0.06);
+	border-color: var(--border);
 }
 
 /* ── Chip selector ── */
 .chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  cursor: pointer;
-  font-size: 0.78rem;
-  transition: all 0.12s;
-  color: var(--text-muted);
-  background: rgba(0,0,0,0.2);
-  white-space: nowrap;
+	display: inline-flex;
+	align-items: center;
+	padding: 4px 10px;
+	border-radius: 20px;
+	border: 1px solid var(--border);
+	cursor: pointer;
+	font-size: 0.78rem;
+	transition: all 0.12s;
+	color: var(--text-muted);
+	background: rgba(0, 0, 0, 0.2);
+	white-space: nowrap;
 }
-.chip:hover { border-color: var(--border-bright); color: var(--text-primary); }
+.chip:hover {
+	border-color: var(--border-bright);
+	color: var(--text-primary);
+}
 .chip.selected {
-  background: rgba(255,153,0,0.2);
-  border-color: var(--gold);
-  color: var(--gold);
-  text-shadow: 0 0 6px var(--gold-glow);
+	background: rgba(255, 153, 0, 0.2);
+	border-color: var(--gold);
+	color: var(--gold);
+	text-shadow: 0 0 6px var(--gold-glow);
 }
 
 /* ── Modal overlay ── */
 .modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.75);
-  backdrop-filter: blur(2px);
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.75);
+	backdrop-filter: blur(2px);
+	z-index: 50;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 16px;
 }
 .modal-box {
-  max-height: 90vh;
-  overflow-y: auto;
-  width: 100%;
-  max-width: 540px;
+	max-height: 90vh;
+	overflow-y: auto;
+	width: 100%;
+	max-width: 540px;
 }
 
 /* ── Nav ── */
 .osrs-nav {
-  background: linear-gradient(180deg, var(--bg-panel-mid) 0%, var(--bg-panel) 100%);
-  border-bottom: 2px solid var(--border-bright);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+	background: linear-gradient(
+		180deg,
+		var(--bg-panel-mid) 0%,
+		var(--bg-panel) 100%
+	);
+	border-bottom: 2px solid var(--border-bright);
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 }
 
 /* ── Empty state ── */
 .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 48px 24px;
-  color: var(--text-dim);
-  text-align: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	padding: 48px 24px;
+	color: var(--text-dim);
+	text-align: center;
 }
 
 /* ── Profit green/red ── */
-.profit-pos { color: #5ac050; }
-.profit-neg { color: #cc4444; }
+.profit-pos {
+	color: #5ac050;
+}
+.profit-neg {
+	color: #cc4444;
+}
 
 /* ── Scrollable chip row ── */
 .chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
 }
 
 /* ── Section header ── */
 .section-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 16px;
-  color: var(--gold);
-  font-weight: bold;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--border);
+	margin-bottom: 16px;
+	color: var(--gold);
+	font-weight: bold;
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
 }
 
 /* ── Hiscores ── */
 .hiscore-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 12px;
-  border-radius: 3px;
-  font-size: 0.85rem;
-  transition: background 0.1s;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 6px 12px;
+	border-radius: 3px;
+	font-size: 0.85rem;
+	transition: background 0.1s;
 }
-.hiscore-row:hover { background: rgba(255,153,0,0.08); }
-.hiscore-row:nth-child(even) { background: rgba(0,0,0,0.15); }
-.hiscore-row:nth-child(even):hover { background: rgba(255,153,0,0.08); }
+.hiscore-row:hover {
+	background: rgba(255, 153, 0, 0.08);
+}
+.hiscore-row:nth-child(even) {
+	background: rgba(0, 0, 0, 0.15);
+}
+.hiscore-row:nth-child(even):hover {
+	background: rgba(255, 153, 0, 0.08);
+}
 
 /* ── Loading dots ── */
 .loading-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--gold);
-  animation: dotPulse 1.2s ease-in-out infinite;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--gold);
+	animation: dotPulse 1.2s ease-in-out infinite;
 }
-.loading-dot:nth-child(2) { animation-delay: 0.2s; }
-.loading-dot:nth-child(3) { animation-delay: 0.4s; }
+.loading-dot:nth-child(2) {
+	animation-delay: 0.2s;
+}
+.loading-dot:nth-child(3) {
+	animation-delay: 0.4s;
+}
 @keyframes dotPulse {
-  0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
-  40% { opacity: 1; transform: scale(1.1); }
+	0%,
+	80%,
+	100% {
+		opacity: 0.2;
+		transform: scale(0.8);
+	}
+	40% {
+		opacity: 1;
+		transform: scale(1.1);
+	}
+}
+
+/* ════════════════════════════════════════
+   RESPONSIVE — Mobile first
+   Breakpoints: sm 480px · md 640px · lg 768px
+   ════════════════════════════════════════ */
+
+/* ── Base mobile defaults ── */
+@media (max-width: 639px) {
+	/* Viewport padding tighter on mobile */
+	.osrs-nav > div {
+		padding: 0 12px !important;
+	}
+
+	/* Nav logo text shorter */
+	.nav-logo-text {
+		display: none;
+	}
+
+	/* Pages get less horizontal padding */
+	.page-container {
+		padding: 16px 12px !important;
+	}
+
+	/* Search box: stack vertically on very small screens */
+	.search-row {
+		flex-direction: column !important;
+		align-items: stretch !important;
+	}
+	.search-row input {
+		width: 100% !important;
+	}
+	.search-row button {
+		width: 100% !important;
+		padding: 10px !important;
+	}
+
+	/* Entry rows: allow wrapping, 2-line layout */
+	.entry-row {
+		flex-wrap: wrap;
+		gap: 4px;
+		padding: 8px;
+		align-items: flex-start;
+	}
+
+	/* Date + time on mobile: stays on its own line */
+	.entry-date {
+		width: 100%;
+		font-size: 0.68rem !important;
+		color: var(--text-dim);
+		margin-bottom: 2px;
+	}
+
+	/* Monster name takes full remaining width */
+	.entry-monster {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	/* Stat cards: 2 per row on mobile */
+	.stats-grid {
+		grid-template-columns: repeat(2, 1fr) !important;
+	}
+
+	/* Skill grid: fewer columns on mobile */
+	.skill-grid-responsive {
+		grid-template-columns: repeat(4, 1fr) !important;
+	}
+
+	/* Tabs: smaller text, less padding */
+	.osrs-tab {
+		padding: 6px 6px !important;
+		font-size: 0.72rem !important;
+	}
+
+	/* Global summary bar: vertical stack */
+	.summary-bar {
+		flex-direction: column !important;
+		gap: 6px !important;
+		align-items: flex-start !important;
+	}
+	.summary-bar > div {
+		flex-direction: column !important;
+		gap: 4px !important;
+	}
+
+	/* Modal: full screen on mobile */
+	.modal-overlay {
+		padding: 0 !important;
+		align-items: flex-end !important;
+	}
+	.modal-box {
+		max-width: 100% !important;
+		max-height: 95vh !important;
+		border-radius: 12px 12px 0 0 !important;
+	}
+
+	/* Numbers grid in modal: 2 cols on mobile (Total XP goes below) */
+	.numbers-grid-3 {
+		grid-template-columns: 1fr 1fr !important;
+	}
+	.numbers-grid-3 > div:last-child {
+		grid-column: 1 / -1;
+	}
+
+	/* Player header in hiscores: stack */
+	.player-header {
+		flex-direction: column !important;
+		align-items: flex-start !important;
+	}
+
+	/* Hiscore stat cards row: wrap */
+	.hiscore-stats {
+		flex-wrap: wrap !important;
+		gap: 6px !important;
+	}
+	.hiscore-stats > div {
+		min-width: 70px !important;
+	}
+}
+
+/* ── Medium: 640px+ ── */
+@media (min-width: 640px) {
+	.skill-grid-responsive {
+		grid-template-columns: repeat(6, 1fr) !important;
+	}
+	.stats-grid {
+		grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+	}
+}
+
+/* ── Large: 768px+ ── */
+@media (min-width: 768px) {
+	.skill-grid-responsive {
+		grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)) !important;
+	}
+}
+
+/* ── Universal: prevent any fixed-width overflow ── */
+img,
+input,
+button,
+select,
+textarea {
+	max-width: 100%;
+}
+
+/* Entry row items: never overflow their container */
+.entry-row > span,
+.entry-row > button {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	flex-shrink: 1;
+}
+
+/* But date and delete button don't shrink to nothing */
+.entry-row > span:first-child {
+	flex-shrink: 0;
+}
+.entry-row > button:last-child {
+	flex-shrink: 0;
 }

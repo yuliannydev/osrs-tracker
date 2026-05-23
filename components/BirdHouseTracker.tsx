@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocalStorage } from '@/lib/useLocalStorage';
-import { BH_LOCATIONS, BH_TIERS } from '@/lib/osrs-data';
+import { BH_LOCATIONS, BH_TIERS, formatGp, formatXp } from '@/lib/osrs-data';
 
 export type BirdHouseEntry = {
 	id: string;
@@ -10,6 +10,8 @@ export type BirdHouseEntry = {
 	tier: string;
 	seeds: number;
 	nests: number;
+	profit: number;
+	xp: number;
 };
 
 function Chips({
@@ -48,6 +50,8 @@ function AddModal({
 	const [tier, setTier] = useState('Yew');
 	const [seeds, setSeeds] = useState(10);
 	const [nests, setNests] = useState(0);
+	const [profit, setProfit] = useState(0);
+	const [xp, setXp] = useState(0);
 
 	const toggleLoc = (l: string) =>
 		setLocations((prev) =>
@@ -56,7 +60,6 @@ function AddModal({
 
 	const handleSave = () => {
 		if (locations.length === 0) return;
-
 		onSave({
 			id: Date.now().toString(),
 			date: new Date().toISOString(),
@@ -64,8 +67,9 @@ function AddModal({
 			tier,
 			seeds,
 			nests,
+			profit,
+			xp,
 		});
-
 		onClose();
 	};
 
@@ -191,6 +195,47 @@ function AddModal({
 									placeholder='0'
 								/>
 							</div>
+							<div>
+								<label
+									style={{
+										fontSize: '0.75rem',
+										color: 'var(--text-muted)',
+										display: 'block',
+										marginBottom: 4,
+									}}
+								>
+									Profit (gp)
+								</label>
+								<input
+									className='osrs-input'
+									style={{ width: '100%' }}
+									type='number'
+									value={profit || ''}
+									onChange={(e) => setProfit(+e.target.value)}
+									placeholder='0'
+								/>
+							</div>
+							<div>
+								<label
+									style={{
+										fontSize: '0.75rem',
+										color: 'var(--text-muted)',
+										display: 'block',
+										marginBottom: 4,
+									}}
+								>
+									XP gained
+								</label>
+								<input
+									className='osrs-input'
+									style={{ width: '100%' }}
+									type='number'
+									min={0}
+									value={xp || ''}
+									onChange={(e) => setXp(+e.target.value)}
+									placeholder='0'
+								/>
+							</div>
 						</div>
 
 						<div
@@ -240,6 +285,8 @@ export default function BirdHouseTracker() {
 
 	const totalRuns = entries.length;
 	const totalNests = entries.reduce((s, e) => s + e.nests, 0);
+	const totalProfit = entries.reduce((s, e) => s + e.profit, 0);
+	const totalXp = entries.reduce((s, e) => s + e.xp, 0);
 
 	const streak = (() => {
 		if (!entries.length) return 0;
@@ -280,13 +327,21 @@ export default function BirdHouseTracker() {
 					<span className='label'>Nests Found</span>
 				</div>
 				<div className='stat-card'>
-					<div className='streak-flame'>🔥 {streak}</div>
 					<span
-						className='label'
-						style={{ marginTop: 4 }}
+						className='value'
+						style={{ color: totalProfit >= 0 ? '#5ac050' : '#cc4444' }}
 					>
-						Day Streak
+						{formatGp(totalProfit)}
 					</span>
+					<span className='label'>Total Profit</span>
+				</div>
+				<div className='stat-card'>
+					<span className='value'>{formatXp(totalXp)}</span>
+					<span className='label'>Total XP</span>
+				</div>
+				<div className='stat-card'>
+					<div className='streak-flame'>🔥 {streak}</div>
+					<span className='label'>Day Streak</span>
 				</div>
 			</div>
 
@@ -373,15 +428,31 @@ export default function BirdHouseTracker() {
 							<span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
 								{e.nests} nests
 							</span>
-							<span
-								style={{
-									fontSize: '0.72rem',
-									color: 'var(--text-dim)',
-									marginLeft: 'auto',
-								}}
-							>
+							<span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
 								{e.seeds} seeds
 							</span>
+							<span
+								style={{
+									fontSize: '0.82rem',
+									fontWeight: 'bold',
+									marginLeft: 'auto',
+									color: e.profit >= 0 ? '#5ac050' : '#cc4444',
+								}}
+							>
+								{e.profit >= 0 ? '+' : ''}
+								{formatGp(e.profit)}
+							</span>
+							{e.xp > 0 && (
+								<span
+									style={{
+										fontSize: '0.72rem',
+										color: 'var(--text-dim)',
+										minWidth: 60,
+									}}
+								>
+									{formatXp(e.xp)} xp
+								</span>
+							)}
 							<button
 								onClick={() => deleteEntry(e.id)}
 								style={{
