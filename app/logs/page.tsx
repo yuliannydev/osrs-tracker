@@ -4,7 +4,6 @@ import { useLocalStorage } from '@/lib/useLocalStorage';
 import type { HerbEntry } from '@/components/HerbTracker';
 import type { BirdHouseEntry } from '@/components/BirdHouseTracker';
 import type { SlayerEntry } from '@/components/SlayerTracker';
-import Footer from '@/components/Footer';
 
 // ── Helpers ──
 
@@ -361,9 +360,6 @@ export default function LogsPage() {
 					month={selectedMonth}
 				/>
 			</div>
-
-			{/* Footer */}
-			<Footer />
 		</div>
 	);
 }

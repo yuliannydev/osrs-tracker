@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import Nav from '@/components/Nav';
+import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
 	title: 'OSRS Tracker',
@@ -19,10 +20,11 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang='es'>
+		<html lang='en'>
 			<body>
 				<Nav />
 				<main style={{ minHeight: 'calc(100vh - 60px)' }}>{children}</main>
+				<Footer />
 			</body>
 		</html>
 	);
