@@ -631,3 +631,10 @@ textarea {
 .entry-row > button:last-child {
 	flex-shrink: 0;
 }
+
+/* Bird house 4-col grid → 2×2 on mobile */
+@media (max-width: 639px) {
+	.bh-stats-grid {
+		grid-template-columns: repeat(2, 1fr) !important;
+	}
+}

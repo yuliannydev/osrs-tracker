@@ -626,6 +626,10 @@ export default function HerbTracker() {
 								{new Date(e.date).toLocaleDateString('en-GB', {
 									day: '2-digit',
 									month: 'short',
+								})}{' '}
+								{new Date(e.date).toLocaleTimeString('en-GB', {
+									hour: '2-digit',
+									minute: '2-digit',
 								})}
 							</span>
 
