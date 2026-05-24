@@ -1,63 +1,102 @@
-import { MONTH_NAMES, daysInMonth, firstDayOffset } from './date-utils';
+import { MONTH_NAMES, daysInMonth } from './date-utils';
 
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
-
-const CELL_ACTIVE = {
-	background: 'linear-gradient(135deg, #3aaa3a, #2a8a2a)',
-	border: '1px solid rgba(80,200,80,0.4)',
-	boxShadow: '0 0 6px rgba(58,170,58,0.4)',
-	color: 'rgba(255,255,255,0.7)',
-} as const;
-
-const CELL_INACTIVE = {
-	background: 'rgba(255,255,255,0.04)',
-	border: '1px solid rgba(255,255,255,0.06)',
-	boxShadow: 'none',
-	color: 'var(--text-dim)',
-} as const;
+// ── Types ──
+type MonthData = {
+	year: number;
+	month: number;
+	activeDaysSet: Set<number>;
+};
 
 type Props = {
 	label: string;
 	icon: string;
-	activeDaysSet: Set<number>;
-	year: number;
-	month: number;
+	months: MonthData[];
+	streak: number;
 };
 
-function buildCells(year: number, month: number): (number | null)[] {
-	const total = daysInMonth(year, month);
-	const offset = firstDayOffset(year, month);
-	const cells: (number | null)[] = [
-		...Array(offset).fill(null),
-		...Array.from({ length: total }, (_, i) => i + 1),
-	];
-	while (cells.length % 7 !== 0) cells.push(null);
-	return cells;
+// ── Build weeks as columns ──
+// GitHub-style: each column = 1 week (Mon→Sun), left to right = oldest to newest
+type DayCell = {
+	date: Date;
+	day: number;
+	month: number;
+	year: number;
+	active: boolean;
+} | null;
+
+function buildWeekColumns(months: MonthData[]): {
+	columns: DayCell[][];
+	monthLabels: { label: string; colIndex: number }[];
+} {
+	// Flatten all days across all months in order
+	const allDays: DayCell[] = [];
+	for (const { year, month, activeDaysSet } of months) {
+		const total = daysInMonth(year, month);
+		for (let d = 1; d <= total; d++) {
+			allDays.push({
+				date: new Date(year, month, d),
+				day: d,
+				month,
+				year,
+				active: activeDaysSet.has(d),
+			});
+		}
+	}
+
+	// Pad start to Monday
+	const firstDay = allDays[0]?.date;
+	const startOffset = firstDay ? (firstDay.getDay() + 6) % 7 : 0; // Mon=0
+	const padded: DayCell[] = [...Array(startOffset).fill(null), ...allDays];
+
+	// Split into columns of 7 (each column = one week)
+	const columns: DayCell[][] = [];
+	for (let i = 0; i < padded.length; i += 7) {
+		columns.push(padded.slice(i, i + 7));
+	}
+
+	// Month labels: find the first column where each month starts
+	const monthLabels: { label: string; colIndex: number }[] = [];
+	let lastMonth = -1;
+	columns.forEach((col, ci) => {
+		const firstReal = col.find(Boolean);
+		if (firstReal && firstReal.month !== lastMonth) {
+			monthLabels.push({
+				label: MONTH_NAMES[firstReal.month].slice(0, 3),
+				colIndex: ci,
+			});
+			lastMonth = firstReal.month;
+		}
+	});
+
+	return { columns, monthLabels };
 }
 
-export function ActivityGrid({
-	label,
-	icon,
-	activeDaysSet,
-	year,
-	month,
-}: Props) {
-	const total = daysInMonth(year, month);
-	const activeCt = activeDaysSet.size;
-	const cells = buildCells(year, month);
+const ROW_LABELS = ['Mon', 'Wed', 'Fri'] as const;
+const ROW_INDICES = [0, 2, 4] as const; // which rows get a label
+
+export function ActivityGrid({ label, icon, months = [], streak }: Props) {
+	const { columns, monthLabels } = buildWeekColumns(months);
+	const CELL = 13; // px — cell size
+	const GAP = 3; // px — gap between cells
+
+	const totalActive = months.reduce((s, m) => s + m.activeDaysSet.size, 0);
+	const totalDays = months.reduce(
+		(s, m) => s + daysInMonth(m.year, m.month),
+		0,
+	);
 
 	return (
 		<div
 			className='osrs-panel'
-			style={{ padding: '18px 20px' }}
+			style={{ padding: '16px 20px' }}
 		>
-			{/* Header */}
+			{/* Panel header */}
 			<div
 				style={{
 					display: 'flex',
 					justifyContent: 'space-between',
 					alignItems: 'center',
-					marginBottom: 14,
+					marginBottom: 12,
 				}}
 			>
 				<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -81,85 +120,145 @@ export function ActivityGrid({
 						padding: '4px 12px',
 						fontSize: '0.85rem',
 						fontWeight: 'bold',
-						color: activeCt > 0 ? 'var(--gold)' : 'var(--text-dim)',
-						letterSpacing: '0.03em',
+						color: streak > 0 ? 'var(--gold)' : 'var(--text-dim)',
 					}}
 				>
-					{activeCt}
-					<span style={{ color: 'var(--text-dim)', fontWeight: 'normal' }}>
-						/{total}
+					🔥 {streak}
+					<span
+						style={{
+							color: 'var(--text-muted)',
+							fontWeight: 'normal',
+							fontSize: '0.72rem',
+							marginLeft: 4,
+						}}
+					>
+						day streak
 					</span>
 				</div>
 			</div>
 
-			{/* Calendar grid */}
-			<div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-				{/* Day-of-week header */}
+			{/* Grid wrapper */}
+			<div
+				style={{
+					overflowX: 'auto',
+					overflowY: 'visible',
+					paddingBottom: 4,
+					width: '100%',
+				}}
+			>
 				<div
-					style={{
-						display: 'grid',
-						gridTemplateColumns: 'repeat(7, 1fr)',
-						gap: 4,
-					}}
+					style={{ display: 'inline-flex', flexDirection: 'column', gap: 0 }}
 				>
-					{DAY_LABELS.map((d) => (
-						<div
-							key={d}
-							style={{
-								fontSize: '0.65rem',
-								color: 'var(--text-dim)',
-								textAlign: 'center',
-								paddingBottom: 2,
-							}}
-						>
-							{d}
-						</div>
-					))}
-				</div>
-
-				{/* Week rows */}
-				{Array.from({ length: cells.length / 7 }, (_, week) => (
-					<div
-						key={week}
-						style={{
-							display: 'grid',
-							gridTemplateColumns: 'repeat(7, 1fr)',
-							gap: 4,
-						}}
-					>
-						{cells.slice(week * 7, week * 7 + 7).map((day, col) => {
-							if (day === null) {
-								return (
-									<div
-										key={col}
-										style={{ aspectRatio: '1', borderRadius: 4 }}
-									/>
-								);
-							}
-							const isActive = activeDaysSet.has(day);
-							const cellStyle = isActive ? CELL_ACTIVE : CELL_INACTIVE;
+					{/* Month labels row */}
+					<div style={{ display: 'flex', marginBottom: 4, marginLeft: 28 }}>
+						{columns.map((_, ci) => {
+							const lbl = monthLabels.find((m) => m.colIndex === ci);
 							return (
 								<div
-									key={col}
-									title={`${MONTH_NAMES[month]} ${day}${isActive ? ' ✓' : ''}`}
-									style={{
-										aspectRatio: '1',
-										borderRadius: 4,
-										transition: 'all 0.1s',
-										cursor: 'default',
-										display: 'flex',
-										alignItems: 'center',
-										justifyContent: 'center',
-										fontSize: '0.6rem',
-										...cellStyle,
-									}}
+									key={ci}
+									style={{ width: CELL + GAP, flexShrink: 0 }}
 								>
-									{day}
+									{lbl && (
+										<span
+											style={{
+												fontSize: '0.62rem',
+												color: 'var(--text-muted)',
+												whiteSpace: 'nowrap',
+											}}
+										>
+											{lbl.label}
+										</span>
+									)}
 								</div>
 							);
 						})}
 					</div>
-				))}
+
+					{/* Day rows (7 rows = Mon–Sun) */}
+					<div style={{ display: 'flex', gap: 0 }}>
+						{/* Row labels (Mon / Wed / Fri) */}
+						<div
+							style={{
+								display: 'flex',
+								flexDirection: 'column',
+								marginRight: 4,
+							}}
+						>
+							{Array.from({ length: 7 }, (_, row) => {
+								const labelIdx = ROW_INDICES.indexOf(
+									row as (typeof ROW_INDICES)[number],
+								);
+								return (
+									<div
+										key={row}
+										style={{
+											height: CELL + GAP,
+											width: 24,
+											display: 'flex',
+											alignItems: 'center',
+											justifyContent: 'flex-end',
+										}}
+									>
+										{labelIdx !== -1 && (
+											<span
+												style={{
+													fontSize: '0.58rem',
+													color: 'var(--text-muted)',
+												}}
+											>
+												{ROW_LABELS[labelIdx]}
+											</span>
+										)}
+									</div>
+								);
+							})}
+						</div>
+
+						{/* Columns of cells */}
+						<div style={{ display: 'flex', gap: GAP }}>
+							{columns.map((col, ci) => (
+								<div
+									key={ci}
+									style={{ display: 'flex', flexDirection: 'column', gap: GAP }}
+								>
+									{Array.from({ length: 7 }, (_, row) => {
+										const cell = col[row] ?? null;
+										if (!cell) {
+											return (
+												<div
+													key={row}
+													style={{ width: CELL, height: CELL, borderRadius: 2 }}
+												/>
+											);
+										}
+										return (
+											<div
+												key={row}
+												title={`${MONTH_NAMES[cell.month]} ${cell.day}, ${cell.year}${cell.active ? ' ✓' : ''}`}
+												style={{
+													width: CELL,
+													height: CELL,
+													borderRadius: 2,
+													cursor: 'default',
+													transition: 'all 0.1s',
+													background: cell.active
+														? 'linear-gradient(135deg, #3aaa3a, #2a8a2a)'
+														: 'rgba(255,255,255,0.06)',
+													border: cell.active
+														? '1px solid rgba(80,200,80,0.4)'
+														: '1px solid rgba(255,255,255,0.08)',
+													boxShadow: cell.active
+														? '0 0 4px rgba(58,170,58,0.35)'
+														: 'none',
+												}}
+											/>
+										);
+									})}
+								</div>
+							))}
+						</div>
+					</div>
+				</div>
 			</div>
 
 			{/* Legend */}
@@ -168,20 +267,33 @@ export function ActivityGrid({
 					display: 'flex',
 					alignItems: 'center',
 					gap: 6,
-					marginTop: 12,
+					marginTop: 10,
 					justifyContent: 'flex-end',
 				}}
 			>
-				<span style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}>
+				<span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
 					No activity
 				</span>
 				<div
-					style={{ width: 12, height: 12, borderRadius: 2, ...CELL_INACTIVE }}
+					style={{
+						width: 11,
+						height: 11,
+						borderRadius: 2,
+						background: 'rgba(255,255,255,0.06)',
+						border: '1px solid rgba(255,255,255,0.08)',
+					}}
 				/>
 				<div
-					style={{ width: 12, height: 12, borderRadius: 2, ...CELL_ACTIVE }}
+					style={{
+						width: 11,
+						height: 11,
+						borderRadius: 2,
+						background: 'linear-gradient(135deg,#3aaa3a,#2a8a2a)',
+						border: '1px solid rgba(80,200,80,0.4)',
+						boxShadow: '0 0 4px rgba(58,170,58,0.35)',
+					}}
 				/>
-				<span style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}>
+				<span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
 					Active day
 				</span>
 			</div>

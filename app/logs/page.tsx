@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocalStorage } from '@/lib/useLocalStorage';
 import type { HerbEntry } from '@/components/HerbTracker';
 import type { BirdHouseEntry } from '@/components/BirdHouseTracker';
@@ -14,38 +14,69 @@ import {
 } from './date-utils';
 
 const GRIDS = [
-	{
-		key: 'herbs',
-		label: 'Farming Runs',
-		icon: '🌾',
-		storageKey: 'osrs-herb-runs',
-	},
-	{
-		key: 'birdhouse',
-		label: 'Bird Houses',
-		icon: '🏠',
-		storageKey: 'osrs-bird-houses',
-	},
-	{
-		key: 'slayer',
-		label: 'Slayer Task',
-		icon: '💀',
-		storageKey: 'osrs-slayer',
-	},
+	{ key: 'herbs', label: 'Farming Runs', icon: '🌾' },
+	{ key: 'birdhouse', label: 'Bird Houses', icon: '🏠' },
+	{ key: 'slayer', label: 'Slayer Task', icon: '💀' },
 ] as const;
 
 const MONTH_OPTIONS = buildLast12Months();
+
+function getVisibleMonths(year: number, month: number, count: number) {
+	return Array.from({ length: count }, (_, i) => {
+		const offset = -(count - 1) + i;
+		const d = new Date(year, month + offset, 1);
+		return { year: d.getFullYear(), month: d.getMonth() };
+	});
+}
+
+function calcStreak(entries: { date: string }[]): number {
+	if (!entries.length) return 0;
+	const days = [...new Set(entries.map((e) => e.date.slice(0, 10)))]
+		.sort()
+		.reverse();
+	let count = 0;
+	let cursor = new Date();
+	cursor.setHours(0, 0, 0, 0);
+	for (const day of days) {
+		const d = new Date(day);
+		d.setHours(0, 0, 0, 0);
+		if (Math.abs(cursor.getTime() - d.getTime()) <= 86_400_000) {
+			count++;
+			cursor = d;
+		} else break;
+	}
+	return count;
+}
 
 export default function LogsPage() {
 	const now = new Date();
 	const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 	const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+	const [monthCount, setMonthCount] = useState(12);
+
+	useEffect(() => {
+		const update = () => setMonthCount(window.innerWidth >= 640 ? 12 : 3);
+		update();
+		window.addEventListener('resize', update);
+		return () => window.removeEventListener('resize', update);
+	}, []);
 
 	const [herbs] = useLocalStorage<HerbEntry[]>('osrs-herb-runs', []);
 	const [bh] = useLocalStorage<BirdHouseEntry[]>('osrs-bird-houses', []);
 	const [slayer] = useLocalStorage<SlayerEntry[]>('osrs-slayer', []);
 
 	const entriesMap = { herbs, birdhouse: bh, slayer };
+	const visibleMonths = getVisibleMonths(
+		selectedYear,
+		selectedMonth,
+		monthCount,
+	);
+
+	const streakMap = {
+		herbs: calcStreak(herbs),
+		birdhouse: calcStreak(bh),
+		slayer: calcStreak(slayer),
+	};
 
 	const handleMonthChange = (ym: string) => {
 		const { year, month } = parseYearMonth(ym);
@@ -112,13 +143,12 @@ export default function LogsPage() {
 						key={key}
 						label={label}
 						icon={icon}
-						activeDaysSet={activeDays(
-							entriesMap[key],
-							selectedYear,
-							selectedMonth,
-						)}
-						year={selectedYear}
-						month={selectedMonth}
+						streak={streakMap[key]}
+						months={visibleMonths.map(({ year, month }) => ({
+							year,
+							month,
+							activeDaysSet: activeDays(entriesMap[key], year, month),
+						}))}
 					/>
 				))}
 			</div>
