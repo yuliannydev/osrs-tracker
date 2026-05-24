@@ -3,89 +3,19 @@ import * as Tabs from '@radix-ui/react-tabs';
 import HerbTracker from '@/components/HerbTracker';
 import BirdHouseTracker from '@/components/BirdHouseTracker';
 import SlayerTracker from '@/components/SlayerTracker';
-import { useLocalStorage } from '@/lib/useLocalStorage';
-import type { HerbEntry } from '@/components/HerbTracker';
-import type { BirdHouseEntry } from '@/components/BirdHouseTracker';
-import type { SlayerEntry } from '@/components/SlayerTracker';
+import { GlobalSummary } from './GlobalSummary';
+import { TAB_ITEMS } from './tabs';
 
-// ── Summary bar — only habit-level stats, no profit/xp (those live inside each tab) ──
-function GlobalSummary() {
-	const [herbs] = useLocalStorage<HerbEntry[]>('osrs-herb-runs', []);
-	const [bh] = useLocalStorage<BirdHouseEntry[]>('osrs-bird-houses', []);
-	const [slayer] = useLocalStorage<SlayerEntry[]>('osrs-slayer', []);
-
-	const totalHerbYield = herbs.reduce((s, e) => s + e.totalYield, 0);
-	const totalNests = bh.reduce((s, e) => s + e.nests, 0);
-	const totalActivities = herbs.length + bh.length + slayer.length;
-
-	return (
-		<div
-			className='osrs-panel'
-			style={{
-				padding: '14px 20px',
-				marginBottom: 24,
-				display: 'flex',
-				gap: 24,
-				alignItems: 'center',
-				flexWrap: 'wrap',
-			}}
-		>
-			<span
-				style={{
-					color: 'var(--gold)',
-					fontWeight: 'bold',
-					fontSize: '0.85rem',
-					letterSpacing: '0.04em',
-				}}
-			>
-				📊 ALL TIME
-			</span>
-			<div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-				<span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-					Activities:{' '}
-					<strong style={{ color: 'var(--text-primary)' }}>
-						{totalActivities}
-					</strong>
-				</span>
-				<span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-					Farming yield:{' '}
-					<strong style={{ color: 'var(--gold)' }}>{totalHerbYield}</strong>
-				</span>
-				<span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-					Nests found:{' '}
-					<strong style={{ color: 'var(--gold)' }}>{totalNests}</strong>
-				</span>
-				<span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-					Farming Runs:{' '}
-					<strong style={{ color: 'var(--text-primary)' }}>
-						{herbs.length}
-					</strong>
-				</span>
-				<span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-					Bird Houses:{' '}
-					<strong style={{ color: 'var(--text-primary)' }}>{bh.length}</strong>
-				</span>
-				<span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-					Slayer Tasks:{' '}
-					<strong style={{ color: 'var(--text-primary)' }}>
-						{slayer.length}
-					</strong>
-				</span>
-			</div>
-		</div>
-	);
-}
-
-const TAB_ITEMS = [
-	{ value: 'herbs', icon: '🌾', label: 'Farming Runs' },
-	{ value: 'birdhouse', icon: '🏠', label: 'Bird Houses' },
-	{ value: 'slayer', icon: '💀', label: 'Slayer Task' },
-];
+const TRACKER_MAP = {
+	herbs: <HerbTracker />,
+	birdhouse: <BirdHouseTracker />,
+	slayer: <SlayerTracker />,
+} as const;
 
 export default function DashboardPage() {
 	return (
 		<div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 24px' }}>
-			<div style={{ marginBottom: 28 }}>
+			<header style={{ marginBottom: 28 }}>
 				<h1
 					style={{
 						fontSize: '1.8rem',
@@ -102,7 +32,7 @@ export default function DashboardPage() {
 					Track your daily OSRS habits — streaks, yields, and activity history
 					all in one place
 				</p>
-			</div>
+			</header>
 
 			<GlobalSummary />
 
@@ -122,33 +52,20 @@ export default function DashboardPage() {
 					))}
 				</Tabs.List>
 
-				<Tabs.Content value='herbs'>
-					<div
-						className='osrs-panel'
-						style={{ padding: 20 }}
+				{TAB_ITEMS.map(({ value }) => (
+					<Tabs.Content
+						key={value}
+						value={value}
 					>
-						<HerbTracker />
-					</div>
-				</Tabs.Content>
-				<Tabs.Content value='birdhouse'>
-					<div
-						className='osrs-panel'
-						style={{ padding: 20 }}
-					>
-						<BirdHouseTracker />
-					</div>
-				</Tabs.Content>
-				<Tabs.Content value='slayer'>
-					<div
-						className='osrs-panel'
-						style={{ padding: 20 }}
-					>
-						<SlayerTracker />
-					</div>
-				</Tabs.Content>
+						<div
+							className='osrs-panel'
+							style={{ padding: 20 }}
+						>
+							{TRACKER_MAP[value]}
+						</div>
+					</Tabs.Content>
+				))}
 			</Tabs.Root>
-
-			{/* Footer removed — use components/Footer in layout instead */}
 		</div>
 	);
 }
