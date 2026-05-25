@@ -1,4 +1,48 @@
 'use client';
+
+const STORAGE_KEYS = ['osrs-herb-runs', 'osrs-bird-houses', 'osrs-slayer'];
+
+function handleExport() {
+	const data: Record<string, unknown> = {};
+	for (const key of STORAGE_KEYS) {
+		const val = localStorage.getItem(key);
+		if (val) data[key] = JSON.parse(val);
+	}
+	const blob = new Blob([JSON.stringify(data, null, 2)], {
+		type: 'application/json',
+	});
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = `osrs-tracker-backup-${new Date().toISOString().slice(0, 10)}.json`;
+	a.click();
+	URL.revokeObjectURL(url);
+}
+
+function handleImport() {
+	const input = document.createElement('input');
+	input.type = 'file';
+	input.accept = '.json';
+	input.onchange = (e) => {
+		const file = (e.target as HTMLInputElement).files?.[0];
+		if (!file) return;
+		const reader = new FileReader();
+		reader.onload = (ev) => {
+			try {
+				const data = JSON.parse(ev.target?.result as string);
+				for (const key of STORAGE_KEYS) {
+					if (data[key]) localStorage.setItem(key, JSON.stringify(data[key]));
+				}
+				window.location.reload();
+			} catch {
+				alert('Invalid backup file.');
+			}
+		};
+		reader.readAsText(file);
+	};
+	input.click();
+}
+
 export default function Footer() {
 	return (
 		<div
@@ -12,36 +56,105 @@ export default function Footer() {
 				gap: 10,
 			}}
 		>
-			{/* Ko-fi */}
-			<a
-				href='https://ko-fi.com/osrstracker'
-				target='_blank'
-				rel='noopener noreferrer'
+			{/* Actions row — Ko-fi + Export + Import */}
+			<div
 				style={{
-					display: 'inline-flex',
+					display: 'flex',
+					flexWrap: 'wrap',
 					alignItems: 'center',
-					gap: 7,
-					background: 'linear-gradient(180deg, #3a2a1a 0%, #2a1a0a 100%)',
-					border: '1px solid var(--border-bright)',
-					borderRadius: 20,
-					padding: '6px 16px',
-					fontSize: '0.8rem',
-					fontWeight: 'bold',
-					color: 'var(--gold)',
-					textDecoration: 'none',
-					transition: 'all 0.15s',
-				}}
-				onMouseEnter={(e) => {
-					e.currentTarget.style.borderColor = 'var(--gold)';
-					e.currentTarget.style.boxShadow = '0 0 8px var(--gold-glow)';
-				}}
-				onMouseLeave={(e) => {
-					e.currentTarget.style.borderColor = 'var(--border-bright)';
-					e.currentTarget.style.boxShadow = 'none';
+					justifyContent: 'center',
+					gap: 8,
 				}}
 			>
-				☕ Support this project on Ko-fi
-			</a>
+				{/* Ko-fi */}
+				<a
+					href='https://ko-fi.com/osrstracker'
+					target='_blank'
+					rel='noopener noreferrer'
+					style={{
+						display: 'inline-flex',
+						alignItems: 'center',
+						gap: 7,
+						background: 'linear-gradient(180deg, #3a2a1a 0%, #2a1a0a 100%)',
+						border: '1px solid var(--border-bright)',
+						borderRadius: 20,
+						padding: '6px 16px',
+						fontSize: '0.8rem',
+						fontWeight: 'bold',
+						color: 'var(--gold)',
+						textDecoration: 'none',
+						transition: 'all 0.15s',
+					}}
+					onMouseEnter={(e) => {
+						e.currentTarget.style.borderColor = 'var(--gold)';
+						e.currentTarget.style.boxShadow = '0 0 8px var(--gold-glow)';
+					}}
+					onMouseLeave={(e) => {
+						e.currentTarget.style.borderColor = 'var(--border-bright)';
+						e.currentTarget.style.boxShadow = 'none';
+					}}
+				>
+					☕ Support this project on Ko-fi
+				</a>
+
+				{/* Export */}
+				<button
+					onClick={handleExport}
+					style={{
+						display: 'inline-flex',
+						alignItems: 'center',
+						gap: 6,
+						background: 'linear-gradient(180deg, #3a2a1a 0%, #2a1a0a 100%)',
+						border: '1px solid var(--border-bright)',
+						borderRadius: 20,
+						padding: '6px 16px',
+						fontSize: '0.8rem',
+						fontWeight: 'bold',
+						color: 'var(--text-muted)',
+						cursor: 'pointer',
+						transition: 'all 0.15s',
+					}}
+					onMouseEnter={(e) => {
+						e.currentTarget.style.borderColor = 'var(--gold)';
+						e.currentTarget.style.color = 'var(--gold)';
+					}}
+					onMouseLeave={(e) => {
+						e.currentTarget.style.borderColor = 'var(--border-bright)';
+						e.currentTarget.style.color = 'var(--text-muted)';
+					}}
+				>
+					📤 Export data
+				</button>
+
+				{/* Import */}
+				<button
+					onClick={handleImport}
+					style={{
+						display: 'inline-flex',
+						alignItems: 'center',
+						gap: 6,
+						background: 'linear-gradient(180deg, #3a2a1a 0%, #2a1a0a 100%)',
+						border: '1px solid var(--border-bright)',
+						borderRadius: 20,
+						padding: '6px 16px',
+						fontSize: '0.8rem',
+						fontWeight: 'bold',
+						color: 'var(--text-muted)',
+						cursor: 'pointer',
+						transition: 'all 0.15s',
+					}}
+					onMouseEnter={(e) => {
+						e.currentTarget.style.borderColor = 'var(--gold)';
+						e.currentTarget.style.color = 'var(--gold)';
+					}}
+					onMouseLeave={(e) => {
+						e.currentTarget.style.borderColor = 'var(--border-bright)';
+						e.currentTarget.style.color = 'var(--text-muted)';
+					}}
+				>
+					📥 Import data
+				</button>
+			</div>
 
 			{/* Credits */}
 			<div
@@ -79,7 +192,9 @@ export default function Footer() {
 						paddingBottom: 1,
 						transition: 'color 0.15s',
 					}}
-					onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold-bright)')}
+					onMouseEnter={(e) =>
+						(e.currentTarget.style.color = 'var(--gold-bright)')
+					}
 					onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--gold)')}
 				>
 					Yulianny B.

@@ -35,14 +35,16 @@ function calcStreak(entries: { date: string }[]): number {
 		.sort()
 		.reverse();
 	let count = 0;
-	let cursor = new Date();
-	cursor.setHours(0, 0, 0, 0);
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+	let cursor = today.getTime();
 	for (const day of days) {
-		const d = new Date(day + 'T00:00:00');
-		const diff = Math.round((cursor.getTime() - d.getTime()) / 86_400_000);
+		const [y, m, d] = day.split('-').map(Number);
+		const date = new Date(y, m - 1, d).getTime();
+		const diff = Math.round((cursor - date) / 86_400_000);
 		if (diff === 0 || diff === 1) {
 			count++;
-			cursor = d;
+			cursor = date;
 		} else break;
 	}
 	return count;
@@ -61,9 +63,18 @@ export default function LogsPage() {
 		return () => window.removeEventListener('resize', update);
 	}, []);
 
-	const [herbs] = useLocalStorage<HerbEntry[]>('osrs-herb-runs', []);
-	const [bh] = useLocalStorage<BirdHouseEntry[]>('osrs-bird-houses', []);
-	const [slayer] = useLocalStorage<SlayerEntry[]>('osrs-slayer', []);
+	const [herbs, , herbsLoaded] = useLocalStorage<HerbEntry[]>(
+		'osrs-herb-runs',
+		[],
+	);
+	const [bh, , bhLoaded] = useLocalStorage<BirdHouseEntry[]>(
+		'osrs-bird-houses',
+		[],
+	);
+	const [slayer, , slayerLoaded] = useLocalStorage<SlayerEntry[]>(
+		'osrs-slayer',
+		[],
+	);
 
 	const entriesMap = { herbs, birdhouse: bh, slayer };
 	const visibleMonths = getVisibleMonths(
@@ -73,9 +84,9 @@ export default function LogsPage() {
 	);
 
 	const streakMap = {
-		herbs: calcStreak(herbs),
-		birdhouse: calcStreak(bh),
-		slayer: calcStreak(slayer),
+		herbs: herbsLoaded ? calcStreak(herbs) : 0,
+		birdhouse: bhLoaded ? calcStreak(bh) : 0,
+		slayer: slayerLoaded ? calcStreak(slayer) : 0,
 	};
 
 	const handleMonthChange = (ym: string) => {
