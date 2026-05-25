@@ -38,9 +38,9 @@ function calcStreak(entries: { date: string }[]): number {
 	let cursor = new Date();
 	cursor.setHours(0, 0, 0, 0);
 	for (const day of days) {
-		const d = new Date(day);
-		d.setHours(0, 0, 0, 0);
-		if (Math.abs(cursor.getTime() - d.getTime()) <= 86_400_000) {
+		const d = new Date(day + 'T00:00:00');
+		const diff = Math.round((cursor.getTime() - d.getTime()) / 86_400_000);
+		if (diff === 0 || diff === 1) {
 			count++;
 			cursor = d;
 		} else break;
