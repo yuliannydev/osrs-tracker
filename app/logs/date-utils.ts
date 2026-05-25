@@ -13,11 +13,13 @@ export const MONTH_NAMES = [
 	'December',
 ] as const;
 
+/** Returns the number of days in a given month */
 export function daysInMonth(year: number, month: number): number {
 	return new Date(year, month + 1, 0).getDate();
 }
 
-/** Returns 1-based day numbers that have at least one entry in the given month */
+/** Returns 1-based day numbers with at least one entry in the given month */
+/**  Parses dates from the UTC ISO string directly to match how entries are saved */
 export function activeDays(
 	entries: { date: string }[],
 	year: number,
@@ -25,15 +27,16 @@ export function activeDays(
 ): Set<number> {
 	const active = new Set<number>();
 	for (const e of entries) {
-		const d = new Date(e.date);
-		if (d.getFullYear() === year && d.getMonth() === month) {
-			active.add(d.getDate());
+		const dateStr = e.date.slice(0, 10); // "YYYY-MM-DD" UTC
+		const [y, m, d] = dateStr.split('-').map(Number);
+		if (y === year && m - 1 === month) {
+			active.add(d);
 		}
 	}
 	return active;
 }
 
-/** Day-of-week offset for the 1st of the month, Mon-start (Mon=0 … Sun=6) */
+/** Returns Mon-start day-of-week offset for the 1st of the month (Mon=0, Sun=6) */
 export function firstDayOffset(year: number, month: number): number {
 	const day = new Date(year, month, 1).getDay();
 	return (day + 6) % 7;

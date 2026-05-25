@@ -29,15 +29,17 @@ function getVisibleMonths(year: number, month: number, count: number) {
 	});
 }
 
+/** Calculates consecutive day streak using UTC dates to match how entries are saved via new Date().toISOString() */
 function calcStreak(entries: { date: string }[]): number {
 	if (!entries.length) return 0;
 	const days = [...new Set(entries.map((e) => e.date.slice(0, 10)))]
 		.sort()
 		.reverse();
 	let count = 0;
-	const today = new Date();
-	today.setHours(0, 0, 0, 0);
-	let cursor = today.getTime();
+	// UTC Like logs
+	const todayUTC = new Date().toISOString().slice(0, 10);
+	const [ty, tm, td] = todayUTC.split('-').map(Number);
+	let cursor = new Date(ty, tm - 1, td).getTime();
 	for (const day of days) {
 		const [y, m, d] = day.split('-').map(Number);
 		const date = new Date(y, m - 1, d).getTime();
@@ -84,9 +86,9 @@ export default function LogsPage() {
 	);
 
 	const streakMap = {
-		herbs: herbsLoaded ? calcStreak(herbs) : 0,
-		birdhouse: bhLoaded ? calcStreak(bh) : 0,
-		slayer: slayerLoaded ? calcStreak(slayer) : 0,
+		herbs: calcStreak(herbs),
+		birdhouse: calcStreak(bh),
+		slayer: calcStreak(slayer),
 	};
 
 	const handleMonthChange = (ym: string) => {
